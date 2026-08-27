@@ -53,14 +53,15 @@ export default function PengaturanPage() {
     }
   };
 
-  const field = (label: string, key: keyof typeof form, type = "text") => (
+  const field = (label: string, key: keyof typeof form, type = "text", placeholder = "") => (
     <div>
       <label className="text-xs font-semibold text-zinc-700 block mb-1">{label}</label>
       <input
         type={type}
-        value={String(form[key])}
+        value={String(form[key] || "")}
         onChange={(e) => setForm({ ...form, [key]: type === "number" ? Number(e.target.value) : e.target.value })}
-        className="w-full h-10 rounded-xl border border-zinc-200 bg-white px-3 text-xs font-medium focus:border-zinc-900 focus:outline-none"
+        placeholder={placeholder}
+        className="w-full h-10 rounded-xl border border-zinc-200 bg-white px-3 text-xs font-medium focus:border-zinc-900 focus:outline-none placeholder:text-zinc-400 placeholder:font-normal"
       />
     </div>
   );
@@ -162,14 +163,14 @@ export default function PengaturanPage() {
         </CardHeader>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {field("Nama Lengkap Sekolah", "schoolName")}
-          {field("NPSN (8 Digit)", "npsn")}
-          {field("Nama Kepala Sekolah (beserta gelar)", "headmasterName")}
-          {field("NIP Kepala Sekolah", "headmasterNip")}
-          {field("Alamat Sekolah", "address")}
-          {field("Nama Dinas Pendidikan Tujuan Surat", "district")}
-          {field("Provinsi", "province")}
-          {field("Tahun Anggaran", "fiscalYear", "number")}
+          {field("Nama Lengkap Sekolah", "schoolName", "text", "Contoh: SD Negeri 1 Bobong")}
+          {field("NPSN (8 Digit)", "npsn", "text", "Contoh: 60200589")}
+          {field("Nama Kepala Sekolah (beserta gelar)", "headmasterName", "text", "Contoh: Drs. H. Ahmad Yani, M.Pd")}
+          {field("NIP Kepala Sekolah", "headmasterNip", "text", "Contoh: 197508172002121001")}
+          {field("Alamat Sekolah", "address", "text", "Contoh: Jl. Trans Taliabu No. 24, Bobong")}
+          {field("Nama Dinas Pendidikan Tujuan Surat", "district", "text", "Contoh: Dinas Pendidikan Kabupaten Pulau Taliabu")}
+          {field("Provinsi", "province", "text", "Contoh: Maluku Utara")}
+          {field("Tahun Anggaran", "fiscalYear", "number", "2026")}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
