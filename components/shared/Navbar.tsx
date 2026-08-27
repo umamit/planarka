@@ -1,15 +1,21 @@
 import React from "react";
 import Link from "next/link";
-import { Sparkles, ShieldCheck } from "lucide-react";
+import Image from "next/image";
+import { ShieldCheck } from "lucide-react";
 
 export function Navbar() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-zinc-200/80 bg-white/80 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link href="/" className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-zinc-900 text-white shadow-sm">
-            <Sparkles className="h-5 w-5" />
-          </div>
+          <Image
+            src="/logo.png"
+            alt="PLANARKA Logo"
+            width={40}
+            height={40}
+            className="rounded-xl object-contain"
+            priority
+          />
           <div>
             <span className="text-sm font-semibold text-zinc-900 tracking-tight">PLANARKA</span>
             <span className="block text-[10px] font-medium text-zinc-500">by IBRA Digital Engineering</span>

@@ -2,8 +2,12 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "PLANARKA — Smart BOS & Pre-ARKAS Planner (IBRA Digital Engineering)",
-  description: "Aplikasi perencanaan BOS, simulasi pengadaan buku Kurikulum Merdeka HET, dan validator pergeseran anggaran pra-ARKAS.",
+  title: "PLANARKA — Smart BOS & Pre-ARKAS Planner",
+  description: "Aplikasi perencanaan BOS, simulasi pengadaan buku Kurikulum Merdeka HET, dan validator pergeseran anggaran pra-ARKAS. By IBRA Digital Engineering.",
+  icons: {
+    icon: "/logo.png",
+    apple: "/logo.png",
+  },
 };
 
 export default function RootLayout({
