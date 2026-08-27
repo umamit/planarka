@@ -237,7 +237,7 @@ export default function BookProcurementPage() {
 
           <Card className="p-4 space-y-3">
             <h3 className="font-bold text-xs text-zinc-800">Ubah Jumlah Siswa & Rombel (Dapodik)</h3>
-            <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
+            <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-zinc-300 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-zinc-150">
               {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((grade) => (
                 <div key={grade} className="grid grid-cols-3 gap-2 items-center text-xs">
                   <span className="font-semibold text-zinc-700">Kls {grade}</span>
