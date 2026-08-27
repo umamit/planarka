@@ -26,7 +26,8 @@ interface RkasItem {
 
 export default function ExportDocumentsPage() {
   const { profile } = useSchool();
-  const [isExporting, setIsExporting] = useState(false);
+  const [isPdfLoading, setIsPdfLoading] = useState(false);
+  const [isExcelLoading, setIsExcelLoading] = useState(false);
   const [items, setItems] = useState<RkasItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -71,7 +72,7 @@ export default function ExportDocumentsPage() {
   };
 
   const handleExportExcel = () => {
-    setIsExporting(true);
+    setIsExcelLoading(true);
 
     const dataHeader = [
       ["KODE REKENING", "NAMA KEGIATAN", "ANGGARAN AWAL", "PERGESERAN (+/-)", "ANGGARAN AKHIR"]
@@ -89,11 +90,11 @@ export default function ExportDocumentsPage() {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Simulasi_Pergeseran_BOS");
     XLSX.writeFile(wb, `Lembar_Kerja_Simulasi_BOS_${profile.schoolName || "Sekolah"}_${profile.fiscalYear}.xlsx`);
-    setIsExporting(false);
+    setIsExcelLoading(false);
   };
 
   const handleExportPdf = () => {
-    setIsExporting(true);
+    setIsPdfLoading(true);
     const doc = new jsPDF();
     doc.setFontSize(13);
     doc.text("BERITA ACARA RAPAT PLENO PERGESERAN ANGGARAN BOS", 14, 20);
@@ -129,7 +130,7 @@ export default function ExportDocumentsPage() {
     doc.text("( ................................... )", 150, finalY + 30);
 
     doc.save(`Berita_Acara_Pergeseran_${profile.schoolName}.pdf`);
-    setIsExporting(false);
+    setIsPdfLoading(false);
   };
 
   if (loading) {
@@ -168,9 +169,9 @@ export default function ExportDocumentsPage() {
             <Button
               variant="outline"
               onClick={handleExportPdf}
-              disabled={isExporting}
+              disabled={isPdfLoading || isExcelLoading}
             >
-              {isExporting ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <FileText className="h-4 w-4 mr-1" />}
+              {isPdfLoading ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <FileText className="h-4 w-4 mr-1" />}
               Cetak Berita Acara PDF
             </Button>
           </div>
@@ -195,9 +196,9 @@ export default function ExportDocumentsPage() {
             <Button
               variant="outline"
               onClick={handleExportExcel}
-              disabled={isExporting}
+              disabled={isPdfLoading || isExcelLoading}
             >
-              {isExporting ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <FileSpreadsheet className="h-4 w-4 mr-1" />}
+              {isExcelLoading ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <FileSpreadsheet className="h-4 w-4 mr-1" />}
               Ekspor Lembar Kerja Excel
             </Button>
           </div>
