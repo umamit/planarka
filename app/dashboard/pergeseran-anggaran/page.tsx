@@ -15,64 +15,7 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-const TEMPLATE_BUDGET_ACTIVITIES = [
-  {
-    label: "Pilih dari Template Anggaran Utama BOSP...",
-    accountCode: "",
-    activityName: "",
-    snpCode: "SNP-1",
-    isHonorNonAsn: false,
-    isMaintenanceSarpras: false,
-  },
-  {
-    label: "Pengadaan Buku Teks Utama Kurikulum Merdeka (Fase A/B/C/D)",
-    accountCode: "5.2.05.01.01.0001",
-    activityName: "Pengadaan Buku Teks Utama Kurikulum Merdeka",
-    snpCode: "SNP-5",
-    isHonorNonAsn: false,
-    isMaintenanceSarpras: true,
-  },
-  {
-    label: "Pembayaran Honor Bulanan Guru Non-ASN (Guru Honorer)",
-    accountCode: "5.1.02.02.01.0026",
-    activityName: "Pembayaran Honor Bulanan Guru Non-ASN",
-    snpCode: "SNP-4",
-    isHonorNonAsn: true,
-    isMaintenanceSarpras: false,
-  },
-  {
-    label: "Pemeliharaan Ruang Kelas & Sarana Prasarana Sekolah",
-    accountCode: "5.1.02.02.01.0061",
-    activityName: "Pemeliharaan Gedung dan Ruang Kelas Ringan",
-    snpCode: "SNP-5",
-    isHonorNonAsn: false,
-    isMaintenanceSarpras: true,
-  },
-  {
-    label: "Langganan Daya & Jasa Internet Sekolah (12 Bulan)",
-    accountCode: "5.1.02.02.01.0014",
-    activityName: "Langganan Daya & Jasa Akses Internet Sekolah",
-    snpCode: "SNP-7",
-    isHonorNonAsn: false,
-    isMaintenanceSarpras: true,
-  },
-  {
-    label: "Belanja Alat Tulis Kantor (ATK) Pembelajaran Murid",
-    accountCode: "5.1.02.01.01.0052",
-    activityName: "Belanja Alat Tulis Kantor (ATK) Sekolah",
-    snpCode: "SNP-6",
-    isHonorNonAsn: false,
-    isMaintenanceSarpras: false,
-  },
-  {
-    label: "Pengadaan Alat Multimedia & Proyektor Pembelajaran",
-    accountCode: "5.1.02.01.01.0024",
-    activityName: "Pengadaan Alat Multimedia Pembelajaran",
-    snpCode: "SNP-5",
-    isHonorNonAsn: false,
-    isMaintenanceSarpras: true,
-  },
-];
+
 
 export default function BudgetShiftSimulatorPage() {
   const { profile } = useSchool();
@@ -90,7 +33,32 @@ export default function BudgetShiftSimulatorPage() {
     initialBudget: 0,
     isHonorNonAsn: false,
     isMaintenanceSarpras: false,
+    isBookProcurement: false,
   });
+
+  const [searchInput, setSearchInput] = useState("");
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+
+  // Fungsi pencarian online ke database Supabase
+  const searchAccountCodes = async (query: string) => {
+    if (!query) {
+      setSearchResults([]);
+      return;
+    }
+    setIsSearching(true);
+    try {
+      const res = await fetch(`/api/references/account-codes?q=${encodeURIComponent(query)}`);
+      const json = await res.json();
+      if (json.data) {
+        setSearchResults(json.data);
+      }
+    } catch (e) {
+      console.error("Gagal melakukan pencarian kode rekening:", e);
+    } finally {
+      setIsSearching(false);
+    }
+  };
 
   useEffect(() => {
     fetchData();
@@ -182,6 +150,7 @@ export default function BudgetShiftSimulatorPage() {
             final_budget: newItem.initialBudget,
             is_non_asn_honor: newItem.isHonorNonAsn,
             is_routine_utility: newItem.isMaintenanceSarpras,
+            is_book_procurement: newItem.isBookProcurement || false,
           },
         ]);
 
@@ -194,7 +163,10 @@ export default function BudgetShiftSimulatorPage() {
             initialBudget: 0,
             isHonorNonAsn: false,
             isMaintenanceSarpras: false,
+            isBookProcurement: false,
           });
+          setSearchInput("");
+          setSearchResults([]);
           fetchData();
         } else {
           alert("Gagal menambahkan item anggaran: " + error.message);
@@ -263,20 +235,7 @@ export default function BudgetShiftSimulatorPage() {
     }
   };
 
-  const handleSelectTemplate = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const idx = Number(e.target.value);
-    const template = TEMPLATE_BUDGET_ACTIVITIES[idx];
-    if (template && template.accountCode !== "") {
-      setNewItem({
-        ...newItem,
-        accountCode: template.accountCode,
-        activityName: template.activityName,
-        snpCode: template.snpCode,
-        isHonorNonAsn: template.isHonorNonAsn,
-        isMaintenanceSarpras: template.isMaintenanceSarpras,
-      });
-    }
-  };
+
 
   const isNegeri = !profile.schoolName.toLowerCase().includes("swasta");
   const validation = validateBudgetShift(items, totalPagu, isNegeri);
@@ -319,18 +278,50 @@ export default function BudgetShiftSimulatorPage() {
             <CardTitle className="text-sm">Tambah Rencana Kegiatan Anggaran Sekolah (RKAS)</CardTitle>
           </CardHeader>
           <form onSubmit={handleAddItem} className="space-y-3 text-xs">
-            <div>
-              <label className="font-semibold text-zinc-700 block mb-1">Pilihan Cepat Kegiatan (Dropdown Utama)</label>
-              <select
-                onChange={handleSelectTemplate}
-                className="w-full h-9 rounded-xl border border-zinc-200 bg-white px-2 focus:outline-none focus:border-zinc-900 font-medium"
-              >
-                {TEMPLATE_BUDGET_ACTIVITIES.map((tpl, idx) => (
-                  <option key={idx} value={idx}>
-                    {tpl.label}
-                  </option>
-                ))}
-              </select>
+            <div className="relative">
+              <label className="font-semibold text-zinc-700 block mb-1">Cari Kegiatan BOSP Online (Katalog BOSP/SIPD 2026)</label>
+              <input
+                type="text"
+                placeholder="Ketik kata kunci... (contoh: buku, honor, listrik, internet, atk)"
+                value={searchInput}
+                onChange={(e) => {
+                  setSearchInput(e.target.value);
+                  searchAccountCodes(e.target.value);
+                }}
+                className="w-full h-9 rounded-xl border border-zinc-200 px-3 focus:outline-none focus:border-zinc-900 font-medium"
+              />
+              {isSearching && (
+                <div className="absolute right-3 top-7">
+                  <Loader2 className="h-4 w-4 animate-spin text-zinc-400" />
+                </div>
+              )}
+              {searchResults.length > 0 && (
+                <div className="absolute left-0 right-0 z-10 mt-1 max-h-48 overflow-y-auto rounded-xl border border-zinc-200 bg-white p-1 shadow-lg">
+                  {searchResults.map((res, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => {
+                        setNewItem({
+                          ...newItem,
+                          accountCode: res.account_code,
+                          activityName: res.account_name,
+                          snpCode: res.default_snp_code || "SNP-5",
+                          isHonorNonAsn: res.is_honor_non_asn,
+                          isMaintenanceSarpras: res.is_maintenance_sarpras,
+                          isBookProcurement: res.is_book_procurement,
+                        });
+                        setSearchInput(res.account_name);
+                        setSearchResults([]);
+                      }}
+                      className="w-full text-left px-3 py-2 hover:bg-zinc-50 rounded-lg transition-colors flex flex-col gap-0.5"
+                    >
+                      <span className="font-semibold text-zinc-900">{res.account_name}</span>
+                      <span className="text-[10px] text-zinc-500 font-mono">{res.account_code} • {res.default_snp_code}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
