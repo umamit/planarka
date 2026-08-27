@@ -88,8 +88,29 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen bg-zinc-50/50 flex flex-col justify-center items-center p-4">
-      <div className="w-full max-w-md space-y-6">
+    <div
+      className="min-h-screen flex flex-col justify-center items-center p-4 relative overflow-hidden"
+      style={{
+        backgroundColor: "#fafafa",
+        backgroundImage: "radial-gradient(circle, #d4d4d8 1px, transparent 1px)",
+        backgroundSize: "28px 28px",
+      }}
+    >
+      {/* Gradient accent blobs */}
+      <div
+        className="pointer-events-none absolute -top-32 -left-32 h-96 w-96 rounded-full opacity-30"
+        style={{ background: "radial-gradient(circle, #a5b4fc 0%, transparent 70%)", filter: "blur(48px)" }}
+      />
+      <div
+        className="pointer-events-none absolute -bottom-32 -right-32 h-96 w-96 rounded-full opacity-20"
+        style={{ background: "radial-gradient(circle, #6ee7b7 0%, transparent 70%)", filter: "blur(48px)" }}
+      />
+      <div
+        className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-64 w-64 rounded-full opacity-10"
+        style={{ background: "radial-gradient(circle, #818cf8 0%, transparent 70%)", filter: "blur(64px)" }}
+      />
+
+      <div className="w-full max-w-md space-y-6 relative z-10">
         <div className="text-center space-y-2">
           <Image
             src="/logo.png"
@@ -100,11 +121,11 @@ export default function LoginPage() {
             priority
           />
           <h1 className="text-2xl font-bold tracking-tight text-zinc-900">PLANARKA</h1>
-          <p className="text-xs text-zinc-500">Smart BOS & Pre-ARKAS Budget Simulator</p>
+          <p className="text-xs text-zinc-500">Smart BOS &amp; Pre-ARKAS Budget Simulator</p>
           <p className="text-[11px] text-zinc-400">by IBRA Digital Engineering</p>
         </div>
 
-        <Card className="shadow-lg p-6 space-y-4">
+        <Card className="shadow-xl p-6 space-y-4 backdrop-blur-sm bg-white/90 border-zinc-200/80">
           <CardHeader className="p-0 pb-2">
             <div className="flex items-center gap-2">
               <KeyRound className="h-5 w-5 text-zinc-700" />
