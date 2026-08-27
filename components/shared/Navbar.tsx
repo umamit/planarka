@@ -11,7 +11,7 @@ export function Navbar() {
 
   const handleLogout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
-    router.push("/auth/login");
+    window.location.replace("/auth/login");
   };
 
   return (
