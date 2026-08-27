@@ -14,7 +14,7 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export default function LicenseManagementPage() {
-  const { profile } = useSchool();
+  const { profile, loading: profileLoading } = useSchool();
   const isSuperadmin = profile.npsn === "00000000";
 
   // State untuk Superadmin
@@ -93,6 +93,15 @@ export default function LicenseManagementPage() {
     setCopiedKey(key);
     setTimeout(() => setCopiedKey(null), 2000);
   };
+
+  if (profileLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 space-y-2">
+        <div className="h-5 w-5 animate-spin rounded-full border-2 border-zinc-900 border-t-transparent" />
+        <span className="text-xs text-zinc-500 font-medium">Memverifikasi status lisensi...</span>
+      </div>
+    );
+  }
 
   // 1. Tampilan Khusus Superadmin
   if (isSuperadmin) {
