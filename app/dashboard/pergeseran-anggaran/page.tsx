@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { ShiftItem, validateBudgetShift } from "@/lib/calculations/budget-shift";
 import { ShiftMatrixTable } from "@/components/budget/ShiftMatrixTable";
+import { BudgetAllocationSummary } from "@/components/budget/BudgetAllocationSummary";
 import { useSchool } from "@/lib/context/SchoolContext";
 import { formatRupiah } from "@/lib/utils";
 import { createClient } from "@supabase/supabase-js";
@@ -435,6 +436,8 @@ export default function BudgetShiftSimulatorPage() {
           </form>
         </Card>
       )}
+
+      <BudgetAllocationSummary totalPagu={totalPagu} validation={validation} />
 
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-6">
         <Card className="space-y-1">
