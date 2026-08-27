@@ -12,6 +12,10 @@ export default function PengaturanPage() {
 
   const [form, setForm] = useState({ ...profile });
 
+  React.useEffect(() => {
+    setForm({ ...profile });
+  }, [profile]);
+
   const handleSave = () => {
     updateProfile(form);
     setSaved(true);

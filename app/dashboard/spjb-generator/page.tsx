@@ -13,16 +13,28 @@ import jsPDF from "jspdf";
 export default function SpjbGeneratorPage() {
   const { profile } = useSchool();
   const [data, setData] = useState<SpjbData>({
-    schoolName: profile.schoolName || "SD Negeri 1 Bobong",
-    npsn: profile.npsn || "60200589",
-    headmasterName: profile.headmasterName || "Husnita Usman, S.Pd., M.Pd.",
-    headmasterNip: profile.headmasterNip || "19820514 200801 2 015",
-    fiscalYear: profile.fiscalYear || 2026,
+    schoolName: "",
+    npsn: "",
+    headmasterName: "",
+    headmasterNip: "",
+    fiscalYear: 2026,
     periodPhase: "Tahap 1",
     totalReceived: 0,
     totalSpent: 0,
     remainingBalance: 0,
   });
+
+  React.useEffect(() => {
+    setData((prev) => ({
+      ...prev,
+      schoolName: profile.schoolName || "SD Negeri 1 Bobong",
+      npsn: profile.npsn || "60200589",
+      headmasterName: profile.headmasterName || "Husnita Usman, S.Pd., M.Pd.",
+      headmasterNip: profile.headmasterNip || "19820514 200801 2 015",
+      fiscalYear: profile.fiscalYear || 2026,
+    }));
+  }, [profile]);
+
   const [leftLogo, setLeftLogo] = useState<string | null>(null);
   const [rightLogo, setRightLogo] = useState<string | null>(null);
 
