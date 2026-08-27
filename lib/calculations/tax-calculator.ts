@@ -10,7 +10,8 @@ export interface TaxCalculationResult {
 
 export function calculateTax(
   grossAmount: number,
-  type: "barang" | "jasa" | "honor_npwp" | "honor_non_npwp" | "buku"
+  type: "barang" | "jasa" | "honor_npwp" | "honor_non_npwp" | "buku",
+  ppnRate: number = 12
 ): TaxCalculationResult {
   let ppnAmount = 0;
   let pph21Amount = 0;
@@ -19,11 +20,11 @@ export function calculateTax(
 
   // Buku Pelajaran & Kitab Suci Bebas PPN (PPN 0%)
   if (type === "barang" && grossAmount >= 2000000) {
-    ppnAmount = (grossAmount * 12) / 112;
+    ppnAmount = (grossAmount * ppnRate) / (100 + ppnRate);
     const taxBase = grossAmount - ppnAmount;
     pph22Amount = taxBase * 0.015;
   } else if (type === "jasa" && grossAmount >= 2000000) {
-    ppnAmount = (grossAmount * 12) / 112;
+    ppnAmount = (grossAmount * ppnRate) / (100 + ppnRate);
     const taxBase = grossAmount - ppnAmount;
     pph23Amount = taxBase * 0.02;
   } else if (type === "honor_npwp") {
