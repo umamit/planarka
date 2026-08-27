@@ -150,8 +150,8 @@ export default function PlenoPresentationPage() {
               {hideSensitive ? "Rp ***.***.***" : formatRupiah(totalPagu)}
             </div>
           </div>
-          <Badge variant={isBalanced && honorPercentage <= 50 ? "success" : "danger"} className="bg-emerald-950/80 text-emerald-300 border-emerald-800 text-xs px-3 py-1">
-            Status: {isBalanced && honorPercentage <= 50 ? "Siap Disahkan" : "Perlu Penyesuaian"}
+          <Badge variant={isBalanced && honorPercentage <= 20 ? "success" : "danger"} className="bg-emerald-950/80 text-emerald-300 border-emerald-800 text-xs px-3 py-1">
+            Status: {isBalanced && honorPercentage <= 20 ? "Siap Disahkan" : "Perlu Penyesuaian"}
           </Badge>
         </div>
 
@@ -163,11 +163,11 @@ export default function PlenoPresentationPage() {
           </div>
           <div>
             <div className="text-xs text-zinc-400">Kepatuhan Honor Guru Non-ASN</div>
-            <div className={`text-xl font-bold mt-0.5 ${honorPercentage <= 50 ? "text-emerald-400" : "text-rose-400"}`}>
-              {honorPercentage.toFixed(1)}% (Batas Max 50%)
+            <div className={`text-xl font-bold mt-0.5 ${honorPercentage <= 20 ? "text-emerald-400" : "text-rose-400"}`}>
+              {honorPercentage.toFixed(1)}% (Batas Max 20% Negeri)
             </div>
             <div className="text-[11px] text-zinc-400 mt-0.5">
-              {honorPercentage <= 50 ? "Sesuai Juknis Pasal 40" : "Melanggar Batas Juknis"}
+              {honorPercentage <= 20 ? "Sesuai Juknis BOSP 2026" : "Melanggar Batas Juknis"}
             </div>
           </div>
           <div>

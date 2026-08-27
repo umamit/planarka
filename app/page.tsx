@@ -77,7 +77,7 @@ export default function LandingPage() {
               </div>
               <CardTitle className="text-base">Simulator Pergeseran Pre-ARKAS</CardTitle>
               <CardDescription className="mt-2 leading-relaxed">
-                Uji keseimbangan pergeseran anggaran secara real-time, validasi batas 50% honor guru non-ASN, dan pencegahan akun minus sebelum pengesahan dinas.
+                Uji keseimbangan pergeseran anggaran secara real-time, validasi batas 20% honor guru non-ASN (negeri) / 40% (swasta) sesuai Juknis BOSP 2026, dan pencegahan akun minus sebelum pengesahan dinas.
               </CardDescription>
             </Card>
 

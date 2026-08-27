@@ -295,7 +295,7 @@ export default function BudgetShiftSimulatorPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-zinc-900">Simulator Pergeseran Anggaran (Pre-ARKAS)</h1>
-          <p className="text-xs text-zinc-500 mt-1">Uji Keseimbangan (Zero-Balance), Batas 50% Honor, dan Anti-Defisit Sebelum Pengesahan Dinas</p>
+          <p className="text-xs text-zinc-500 mt-1">Uji Keseimbangan (Zero-Balance), Batas 20% Honor Negeri / 40% Swasta, dan Anti-Defisit Sebelum Pengesahan Dinas</p>
         </div>
         <div className="flex items-center gap-2">
           {autoSaving && (

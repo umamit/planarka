@@ -194,7 +194,7 @@ export default function DashboardOverviewPage() {
         </CardHeader>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
           <div className="rounded-xl border border-zinc-200 p-4 bg-zinc-50/50">
-            <div className="text-xs font-semibold text-zinc-700">Maks. Honor Guru Non-ASN (Maks 50%)</div>
+            <div className="text-xs font-semibold text-zinc-700">Maks. Honor Guru Non-ASN (Maks 20%)</div>
             <div className="text-lg font-bold text-zinc-900 mt-1">{formatRupiah(pagu.maxHonorBudget)}</div>
             <p className="text-[11px] text-zinc-500 mt-1">Wajib terdaftar NUPTK & Dapodik (Pasal 40)</p>
           </div>

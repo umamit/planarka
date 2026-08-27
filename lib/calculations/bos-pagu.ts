@@ -7,7 +7,7 @@ export interface BosPaguCalculation {
   totalPagu: number;
   phase1Allocation: number;
   phase2Allocation: number;
-  maxHonorBudget: number; // 50% max
+  maxHonorBudget: number; // 20% max negeri / 40% max swasta (Permendikdasmen No. 8/2026)
   recommendedBookBudget: number; // 20% max
   maxMaintenanceBudget: number; // 20% max
 }
@@ -34,7 +34,7 @@ export function calculateBosPagu(
     totalPagu,
     phase1Allocation,
     phase2Allocation,
-    maxHonorBudget: totalPagu * 0.5,
+    maxHonorBudget: totalPagu * 0.2,
     recommendedBookBudget: totalPagu * 0.2,
     maxMaintenanceBudget: totalPagu * 0.2,
   };
