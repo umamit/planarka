@@ -16,6 +16,7 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey);
 export default function PenaltyMitigationPage() {
   const { profile } = useSchool();
   const [phase1Allocation, setPhase1Allocation] = useState<number>(0);
+  const [bankBalance, setBankBalance] = useState<number>(0);
   const [realized, setRealized] = useState<number>(0);
   const [reportDate, setReportDate] = useState<string>("2026-07-25");
   const [loading, setLoading] = useState(true);
@@ -36,17 +37,20 @@ export default function PenaltyMitigationPage() {
         .single();
 
       if (school) {
+        // Ambil nominal alokasi Tahap 1 dan saldo bank riil
         const { data: alloc } = await supabase
           .from("bos_allocations")
-          .select("phase_1_allocation")
+          .select("phase_1_allocation, bank_balance")
           .eq("tenant_id", school.id)
           .eq("fiscal_year", profile.fiscalYear)
           .single();
 
         if (alloc) {
           setPhase1Allocation(Number(alloc.phase_1_allocation) || 0);
+          setBankBalance(Number(alloc.bank_balance) || 0);
         }
 
+        // Hitung realisasi pengeluaran riil dari database RKAS
         const { data: items } = await supabase
           .from("rkas_budget_items")
           .select("final_budget")
@@ -65,11 +69,10 @@ export default function PenaltyMitigationPage() {
     }
   };
 
-  // Sesuaikan input parameter dan penamaan return dari calculatePenaltyMitigation
   const result = calculatePenaltyMitigation({
     phase1Allocation,
     realizedExpensePhase1: realized,
-    currentBankBalance: 0,
+    currentBankBalance: bankBalance,
     reportSubmissionDate: reportDate,
   });
 
