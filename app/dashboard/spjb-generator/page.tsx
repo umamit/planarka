@@ -5,17 +5,19 @@ import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/Ca
 import { Button } from "@/components/ui/Button";
 import { LetterheadLogoUpload } from "@/components/surat/LetterheadLogoUpload";
 import { SpjbData, validateSpjb } from "@/lib/calculations/spjb-generator";
+import { useSchool } from "@/lib/context/SchoolContext";
 import { formatRupiah } from "@/lib/utils";
 import { FileCheck, Printer } from "lucide-react";
 import jsPDF from "jspdf";
 
 export default function SpjbGeneratorPage() {
+  const { profile } = useSchool();
   const [data, setData] = useState<SpjbData>({
-    schoolName: "SD Negeri 1 Bobong",
-    npsn: "60201829",
-    headmasterName: "Husnita Usman, S.Pd., M.Pd.",
-    headmasterNip: "19820514 200801 2 015",
-    fiscalYear: 2026,
+    schoolName: profile.schoolName || "SD Negeri 1 Bobong",
+    npsn: profile.npsn || "60201829",
+    headmasterName: profile.headmasterName || "Husnita Usman, S.Pd., M.Pd.",
+    headmasterNip: profile.headmasterNip || "19820514 200801 2 015",
+    fiscalYear: profile.fiscalYear || 2026,
     periodPhase: "Tahap 1",
     totalReceived: 0,
     totalSpent: 0,

@@ -18,7 +18,8 @@ import {
   Key,
   Landmark,
   Tv, 
-  FileSpreadsheet 
+  FileSpreadsheet,
+  Settings
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -38,6 +39,7 @@ const NAV_ITEMS = [
   { href: "/dashboard/lisensi", label: "Lisensi Sekolah", icon: Key },
   { href: "/dashboard/pleno-presentasi", label: "Mode Rapat Pleno", icon: Tv },
   { href: "/dashboard/export", label: "Ekspor PDF & Excel", icon: FileSpreadsheet },
+  { href: "/dashboard/pengaturan", label: "Pengaturan Sekolah", icon: Settings },
 ];
 
 export function Sidebar() {

@@ -4,14 +4,14 @@ import React, { useState } from "react";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { LetterheadLogoUpload } from "@/components/surat/LetterheadLogoUpload";
+import { useSchool } from "@/lib/context/SchoolContext";
 import { Printer, FileText } from "lucide-react";
 import jsPDF from "jspdf";
 
 export default function DistrictLetterPage() {
+  const { profile } = useSchool();
   const [letterNumber, setLetterNumber] = useState("421.2/084/SDN-01/BOB/2026");
-  const [schoolName] = useState("SD Negeri 1 Bobong");
-  const [district] = useState("Dinas Pendidikan Kabupaten Pulau Taliabu");
-  const [reason, setReason] = useState("Optimalisasi alokasi pengadaan buku teks Kurikulum Merdeka dan penyesuaian pemeliharaan sarana kelas ringan menjelang Asesmen Nasional.");
+  const [reason, setReason] = useState("");
   const [leftLogo, setLeftLogo] = useState<string | null>(null);
   const [rightLogo, setRightLogo] = useState<string | null>(null);
 
@@ -36,36 +36,36 @@ export default function DistrictLetterPage() {
     }
 
     doc.setFontSize(11);
-    doc.text("PEMERINTAH KABUPATEN PULAU TALIABU", 105, 14, { align: "center" });
+    doc.text(`PEMERINTAH ${profile.province.toUpperCase()}`, 105, 14, { align: "center" });
     doc.text("DINAS PENDIDIKAN", 105, 19, { align: "center" });
     doc.setFontSize(13);
-    doc.text(schoolName.toUpperCase(), 105, 25, { align: "center" });
+    doc.text((profile.schoolName || "NAMA SEKOLAH").toUpperCase(), 105, 25, { align: "center" });
     doc.setFontSize(8.5);
-    doc.text("Alamat: Jl. Pendidikan No. 01, Bobong, Kec. Taliabu Barat, Maluku Utara", 105, 30, { align: "center" });
+    doc.text(profile.address || "Alamat Sekolah", 105, 30, { align: "center" });
     doc.setLineWidth(0.8);
     doc.line(14, 34, 196, 34);
 
     doc.setFontSize(10);
     doc.text(`Nomor   : ${letterNumber}`, 14, 44);
     doc.text("Lampiran: 1 (Satu) Berkas Lembar Kerja Simulasi", 14, 50);
-    doc.text("Perihal : Permohonan Pengesahan Pergeseran RKAS BOS 2026", 14, 56);
+    doc.text(`Perihal : Permohonan Pengesahan Pergeseran RKAS BOS ${profile.fiscalYear}`, 14, 56);
 
     doc.text("Kepada Yth.", 14, 66);
-    doc.text("Kepala Dinas Pendidikan Kabupaten Pulau Taliabu", 14, 72);
+    doc.text(`Kepala ${profile.district}`, 14, 72);
     doc.text("di - Tempat", 14, 78);
 
-    const body = `Dengan hormat, sehubungan dengan hasil kesepakatan Rapat Pleno Dewan Guru dan Komite Sekolah terkait penyesuaian rencana anggaran operasional sekolah, bersama ini kami mengajukan Permohonan Pengesahan Pergeseran Anggaran RKAS Dana BOS Tahun Anggaran 2026 dengan alasan pertimbangan: ${reason}.`;
+    const body = `Dengan hormat, sehubungan dengan hasil kesepakatan Rapat Pleno Dewan Guru dan Komite Sekolah terkait penyesuaian rencana anggaran operasional sekolah, bersama ini kami mengajukan Permohonan Pengesahan Pergeseran Anggaran RKAS Dana BOS Tahun Anggaran ${profile.fiscalYear} dengan alasan pertimbangan: ${reason}.`;
     const splitBody = doc.splitTextToSize(body, 180);
     doc.text(splitBody, 14, 90);
 
     doc.text("Demikian surat permohonan ini kami sampaikan, atas perhatian dan persetujuan Bapak kami ucapkan terima kasih.", 14, 122);
 
-    doc.text("Bobong, .............................. 2026", 130, 142);
+    doc.text(`.............................. ${profile.fiscalYear}`, 130, 142);
     doc.text("Kepala Sekolah,", 130, 148);
-    doc.text("Husnita Usman, S.Pd., M.Pd.", 130, 175);
-    doc.text("NIP. 19820514 200801 2 015", 130, 181);
+    doc.text(profile.headmasterName || "Nama Kepala Sekolah", 130, 175);
+    doc.text(`NIP. ${profile.headmasterNip || "-"}`, 130, 181);
 
-    doc.save(`Surat_Pengantar_Dinas_${schoolName.replace(/\s+/g, "_")}.pdf`);
+    doc.save(`Surat_Pengantar_Dinas_${(profile.schoolName || "Sekolah").replace(/\s+/g, "_")}.pdf`);
   };
 
   return (
@@ -120,8 +120,8 @@ export default function DistrictLetterPage() {
               <CardDescription className="mt-1">Format resmi berkop ganda standar kedinasan</CardDescription>
             </CardHeader>
             <div className="mt-4 p-4 rounded-xl border border-zinc-200 bg-white text-xs text-zinc-600 space-y-1">
-              <div className="font-semibold text-zinc-900">{district}</div>
-              <div>Perihal: Permohonan Pengesahan Pergeseran RKAS 2026</div>
+              <div className="font-semibold text-zinc-900">{profile.district}</div>
+              <div>Perihal: Permohonan Pengesahan Pergeseran RKAS {profile.fiscalYear}</div>
               <div className="text-[11px] text-zinc-500">
                 Logo Terpasang: {leftLogo ? "Logo Kiri Aktif" : "Tanpa Logo Kiri"} | {rightLogo ? "Logo Kanan Aktif" : "Tanpa Logo Kanan"}
               </div>
