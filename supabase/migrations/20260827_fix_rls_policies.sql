@@ -23,3 +23,21 @@ CREATE POLICY "Allow public access for all validation operations" ON honor_recip
     TO public
     USING (true)
     WITH CHECK (true);
+
+-- 3. Kebijakan RLS untuk tabel bos_allocations
+ALTER TABLE bos_allocations ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow public access for all allocation operations" ON bos_allocations;
+CREATE POLICY "Allow public access for all allocation operations" ON bos_allocations
+    FOR ALL
+    TO public
+    USING (true)
+    WITH CHECK (true);
+
+-- 4. Kebijakan RLS untuk tabel tenants_schools
+ALTER TABLE tenants_schools ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow public access for all school operations" ON tenants_schools;
+CREATE POLICY "Allow public access for all school operations" ON tenants_schools
+    FOR ALL
+    TO public
+    USING (true)
+    WITH CHECK (true);
