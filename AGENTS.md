@@ -37,6 +37,8 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 * **Icons**: Lucide React (Standard Web Icons).
 * **Zero Unicode Emojis**: Dilarang keras menggunakan karakter emoji Unicode di seluruh codebase, UI, notifikasi, dan skrip.
 * **Batas Panjang File**: Setiap file komponen, modul logika, konstanta, atau stylesheet wajib **<= 150 baris** (Single Responsibility Principle).
+* **Verifikasi Empiris Tanpa Asumsi**: Dilarang keras berasumsi atas cara kerja sistem eksternal atau aplikasi pihak ketiga (seperti Dapodik dan ARKAS). Agen wajib selalu memverifikasi dokumentasi resmi atau melakukan query/uji coba langsung untuk memastikan fakta operasional sebelum menjelaskan atau menerapkannya ke dalam aplikasi.
+
 
 ---
 
@@ -73,3 +75,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
     - Layar rapat komite sekolah dengan fitur penyembunyian saldo sensitif.
 13. **Ekspor Lembar Kerja Pleno**:
     - PDF Berita Acara Rapat Pleno dan Excel (.xlsx) dengan struktur kode rekening ARKAS.
+14. **Larangan Keras Fitur Fiktif Aplikasi Pemerintah**:
+    - Dilarang keras berasumsi atau menawarkan fitur impor/ekspor data langsung secara otomatis antara PLANARKA dengan aplikasi resmi pemerintah (seperti Dapodik desktop dan ARKAS desktop) jika aplikasi pemerintah tersebut sebenarnya mengunci akses datanya.
+    - Semua integrasi pertukaran data wajib dijelaskan secara jujur dan realistis sesuai batasan lapangan (misalnya: membaca file Excel dari portal SP Datadik, dan menyalin manual Excel PLANARKA ke ARKAS desktop).
+
