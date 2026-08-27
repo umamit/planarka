@@ -35,6 +35,12 @@ export default function BudgetShiftSimulatorPage() {
 
   useEffect(() => {
     fetchData();
+
+    // Listen to AI-powered inputs to automatically refresh tables
+    window.addEventListener("rkas_updated", fetchData);
+    return () => {
+      window.removeEventListener("rkas_updated", fetchData);
+    };
   }, [profile.npsn, profile.fiscalYear]);
 
   const fetchData = async () => {
