@@ -99,7 +99,7 @@ export default function ExportDocumentsPage() {
     doc.text("BERITA ACARA RAPAT PLENO PERGESERAN ANGGARAN BOS", 14, 20);
     doc.setFontSize(9.5);
     doc.text(`Tahun Anggaran ${profile.fiscalYear} - Sekolah: ${profile.schoolName} (NPSN: ${profile.npsn})`, 14, 27);
-    doc.text(`Berdasarkan Permendikbudristek No. 63/2023 - ${profile.district || "Wilayah Kab. Pulau Taliabu"}`, 14, 33);
+    doc.text(`Berdasarkan Permendikdasmen No. 8/2026 - ${profile.district || "Wilayah Kab. Pulau Taliabu"}`, 14, 33);
 
     const tableRows = items.map((it) => [
       it.code,

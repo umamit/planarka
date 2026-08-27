@@ -124,7 +124,7 @@ export default function DashboardOverviewPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-zinc-900">Dasbor Pagu Anggaran BOS</h1>
-          <p className="text-xs text-zinc-500 mt-1">Simulasi Pagu Definitif dan Ambang Batas Regulasi Permendikbudristek No. 63/2023</p>
+          <p className="text-xs text-zinc-500 mt-1">Simulasi Pagu Definitif dan Ambang Batas Regulasi Permendikdasmen No. 8/2026</p>
         </div>
         <div className="flex items-center gap-3">
           <Badge variant="info">Zona {profile.hetZone} - {profile.province} ({profile.district.split(" ")[2] || "Taliabu"})</Badge>
