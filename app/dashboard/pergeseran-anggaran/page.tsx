@@ -278,7 +278,8 @@ export default function BudgetShiftSimulatorPage() {
     }
   };
 
-  const validation = validateBudgetShift(items, totalPagu);
+  const isNegeri = !profile.schoolName.toLowerCase().includes("swasta");
+  const validation = validateBudgetShift(items, totalPagu, isNegeri);
 
   if (loading && profile.npsn) {
     return (
@@ -455,7 +456,7 @@ export default function BudgetShiftSimulatorPage() {
             </Badge>
           </div>
           <div className={`text-base font-bold mt-1 ${validation.isHonorValid ? "text-emerald-700" : "text-rose-600"}`}>
-            {validation.honorPercentage.toFixed(1)}% (Max 50%)
+            {validation.honorPercentage.toFixed(1)}% (Max {validation.honorLimit}%)
           </div>
           <p className="text-[10px] text-zinc-400">Rasio Belanja Guru Non-ASN</p>
         </Card>
