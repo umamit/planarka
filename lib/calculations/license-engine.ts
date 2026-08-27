@@ -12,6 +12,7 @@ export interface SchoolLicense {
 // Whitelist lisensi aktif — hanya sekolah yang terdaftar resmi di IBRA Digital Engineering
 const ACTIVE_LICENSES: Record<string, string> = {
   "60200589": "IBRA-BOS-2026-60200589-0013", // SD Negeri 1 Bobong, Kab. Pulau Taliabu
+  "00000000": "IBRA-SUPERADMIN-2026-HQ-9999", // Master Key Superadmin IBRA
 };
 
 export function generateLicenseKey(npsn: string, year: number = 2026): string {
