@@ -36,7 +36,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 * **Database & Auth**: Supabase PostgreSQL dengan Row Level Security (RLS) Multi-Tenant berbasis NPSN sekolah.
 * **Icons**: Lucide React (Standard Web Icons).
 * **Zero Unicode Emojis**: Dilarang keras menggunakan karakter emoji Unicode di seluruh codebase, UI, notifikasi, dan skrip.
-* **Batas Panjang File**: Setiap file komponen, modul logika, konstanta, atau stylesheet wajib **<= 150 baris** (Single Responsibility Principle).
+* **Batas Panjang File**: Setiap file komponen, modul logika, konstanta, atau stylesheet wajib **<= 150 baris** (150L) dengan batas aman direkomendasikan **<= 100 baris** (100L) demi menjaga Single Responsibility Principle.
 * **Verifikasi Empiris Tanpa Asumsi**: Dilarang keras berasumsi atas cara kerja sistem eksternal atau aplikasi pihak ketiga (seperti Dapodik dan ARKAS). Agen wajib selalu memverifikasi dokumentasi resmi atau melakukan query/uji coba langsung untuk memastikan fakta operasional sebelum menjelaskan atau menerapkannya ke dalam aplikasi.
 
 
