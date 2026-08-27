@@ -21,12 +21,7 @@ interface UtilityItem {
   provider: string;
 }
 
-const DEFAULT_UTILITIES = [
-  { name: "Langganan Listrik PLN Sekolah", monthlyCost: 0, provider: "-" },
-  { name: "Akses Internet Sekolah (Starlink / ISP)", monthlyCost: 0, provider: "-" },
-  { name: "Air Bersih / PDAM", monthlyCost: 0, provider: "-" },
-  { name: "Langganan Aplikasi & Domain Sekolah", monthlyCost: 0, provider: "-" },
-];
+
 
 export default function FixedUtilityBudgetPage() {
   const { profile } = useSchool();
@@ -73,34 +68,7 @@ export default function FixedUtilityBudgetPage() {
             provider: di.account_name || "-",
           })));
         } else {
-          const inserts = DEFAULT_UTILITIES.map((du) => ({
-            tenant_id: school.id,
-            fiscal_year: profile.fiscalYear,
-            snp_code: "SNP-7",
-            snp_name: "Standar Pengelolaan",
-            account_code: "5.1.02.02.01",
-            account_name: du.provider,
-            activity_name: du.name,
-            initial_budget: du.monthlyCost * 12,
-            shifted_amount: 0,
-            final_budget: du.monthlyCost * 12,
-            is_routine_utility: true,
-          }));
-
-          const { data: newItems } = await supabase
-            .from("rkas_budget_items")
-            .insert(inserts)
-            .select();
-
-          if (newItems) {
-            setUtilities(newItems.map((di: any) => ({
-              id: di.id,
-              name: di.activity_name,
-              monthlyCost: Math.round(Number(di.initial_budget) / 12),
-              monthsCount: 12,
-              provider: di.account_name,
-            })));
-          }
+          setUtilities([]);
         }
       }
     } catch (e) {
