@@ -18,9 +18,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const sessionPayload = Buffer.from(
+    const sessionPayload = btoa(
       JSON.stringify({ npsn, issuedAt: Date.now() })
-    ).toString("base64");
+    );
 
     const response = NextResponse.json({ success: true });
 

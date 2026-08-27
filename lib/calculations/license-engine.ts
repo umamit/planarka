@@ -11,10 +11,6 @@ export interface SchoolLicense {
   annualFee: number;
 }
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
 // Whitelist lokal tetap disimpan sebagai cadangan (offline fallback)
 const LOCAL_LICENSES: Record<string, string> = {
   "60200589": "IBRA-BOS-2026-60200589-0013", // SD Negeri 1 Bobong, Kab. Pulau Taliabu
@@ -38,22 +34,27 @@ export async function verifyLicenseKey(npsn: string, inputKey: string): Promise<
     return true;
   }
 
-  // 2. Coba cek ke Database Supabase
-  try {
-    const { data, error } = await supabase
-      .from("tenants_schools")
-      .select("npsn, license_status")
-      .eq("npsn", cleanNpsn)
-      .eq("license_status", "active")
-      .single();
+  // 2. Coba cek ke Database Supabase (Inisialisasi dinamis agar tidak error jika URL kosong)
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
 
-    if (!error && data) {
-      // Generate expected key untuk validasi hash agar aman dari tampering
-      const expectedKey = generateLicenseKey(cleanNpsn);
-      return cleanKey === expectedKey;
+  if (supabaseUrl && supabaseAnonKey) {
+    try {
+      const supabase = createClient(supabaseUrl, supabaseAnonKey);
+      const { data, error } = await supabase
+        .from("tenants_schools")
+        .select("npsn, license_status")
+        .eq("npsn", cleanNpsn)
+        .eq("license_status", "active")
+        .single();
+
+      if (!error && data) {
+        const expectedKey = generateLicenseKey(cleanNpsn);
+        return cleanKey === expectedKey;
+      }
+    } catch (e) {
+      console.error("Gagal verifikasi via Supabase:", e);
     }
-  } catch (e) {
-    console.error("Gagal verifikasi via Supabase:", e);
   }
 
   // 3. Fallback ke Whitelist Lokal jika offline atau gagal koneksi database
