@@ -19,7 +19,8 @@ import {
   Landmark,
   Tv, 
   FileSpreadsheet,
-  Settings
+  Settings,
+  CalendarDays
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -49,6 +50,7 @@ export function Sidebar() {
         { href: "/dashboard/pergeseran-anggaran", label: "Simulasi Pergeseran", icon: ArrowLeftRight },
         { href: "/dashboard/validasi-honor", label: "Validasi Honor Guru", icon: UserCheck },
         { href: "/dashboard/daya-jasa-rutin", label: "Daya & Jasa Terkunci", icon: Zap },
+        { href: "/dashboard/rpd-bulanan", label: "RPD Bulanan", icon: CalendarDays },
         { href: "/dashboard/pbd-rapor", label: "PBD Rapor Pendidikan", icon: TrendingUp },
         { href: "/dashboard/bku-kas", label: "Rekonsiliasi Kas BKU", icon: Landmark },
         { href: "/dashboard/mitigasi-penalti", label: "Mitigasi Penalti PMK", icon: AlertTriangle },
