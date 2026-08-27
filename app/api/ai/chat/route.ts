@@ -63,7 +63,7 @@ Berikan saran pembelanjaan RKAS yang taktis, logis, patuh regulasi, tanpa basa-b
         Authorization: `Bearer ${groqApiKey}`,
       },
       body: JSON.stringify({
-        model: "llama-3.1-8b-instant",
+        model: "groq/compound-mini",
         messages: [
           { role: "system", content: systemPrompt },
           ...messages.slice(-10), // Batasi riwayat obrolan hingga 10 pesan terakhir
