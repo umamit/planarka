@@ -11,6 +11,7 @@ import { useSchool } from "@/lib/context/SchoolContext";
 import { formatRupiah } from "@/lib/utils";
 import { createClient } from "@supabase/supabase-js";
 import { Save, Loader2, CheckCircle, AlertTriangle } from "lucide-react";
+import { DapodikUploader } from "@/components/shared/DapodikUploader";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
@@ -233,6 +234,13 @@ export default function BookProcurementPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <div className="lg:col-span-1 space-y-4">
+          <DapodikUploader
+            onDataParsed={({ students: newStudents, rombels: newRombels }) => {
+              setStudents(newStudents);
+              setRombels(newRombels);
+            }}
+          />
+
           <Card className="p-4 space-y-3">
             <h3 className="font-bold text-xs text-zinc-800">Ubah Jumlah Siswa & Rombel (Dapodik)</h3>
             <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">

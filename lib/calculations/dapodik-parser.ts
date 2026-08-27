@@ -1,35 +1,56 @@
-export interface DapodikGradeSummary {
-  grade: number;
-  rombelCount: number;
-  maleStudents: number;
-  femaleStudents: number;
-  totalStudents: number;
+export interface ParsedDapodikData {
+  students: { [grade: number]: number };
+  rombels: { [grade: number]: number };
 }
 
-export function parseDapodikMock(fileName: string): {
-  schoolName: string;
-  npsn: string;
-  grades: DapodikGradeSummary[];
-  totalAllStudents: number;
-  totalAllRombels: number;
-} {
-  const grades: DapodikGradeSummary[] = [
-    { grade: 1, rombelCount: 1, maleStudents: 16, femaleStudents: 16, totalStudents: 32 },
-    { grade: 2, rombelCount: 1, maleStudents: 14, femaleStudents: 16, totalStudents: 30 },
-    { grade: 3, rombelCount: 1, maleStudents: 15, femaleStudents: 14, totalStudents: 29 },
-    { grade: 4, rombelCount: 1, maleStudents: 13, femaleStudents: 15, totalStudents: 28 },
-    { grade: 5, rombelCount: 1, maleStudents: 18, femaleStudents: 17, totalStudents: 35 },
-    { grade: 6, rombelCount: 1, maleStudents: 17, femaleStudents: 15, totalStudents: 32 },
-  ];
+export function parseDapodikFile(fileContent: string, fileName: string): ParsedDapodikData {
+  const students: { [grade: number]: number } = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0 };
+  const rombels: { [grade: number]: number } = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0 };
 
-  const totalAllStudents = grades.reduce((acc, g) => acc + g.totalStudents, 0);
-  const totalAllRombels = grades.reduce((acc, g) => acc + g.rombelCount, 0);
+  const isJson = fileName.toLowerCase().endsWith(".json") || fileContent.trim().startsWith("{");
 
-  return {
-    schoolName: "SD Negeri 1 Bobong",
-    npsn: "60200589",
-    grades,
-    totalAllStudents,
-    totalAllRombels,
-  };
+  if (isJson) {
+    try {
+      const parsed = JSON.parse(fileContent);
+      // Mendukung format json dapodik bersarang atau flat
+      const rows = Array.isArray(parsed) ? parsed : parsed.data || parsed.rows || [];
+      
+      rows.forEach((row: any) => {
+        const grade = Number(row.tingkat_kelas || row.class_grade || row.grade);
+        const count = Number(row.jumlah_siswa || row.student_count || row.students || 0);
+        const rombelCount = Number(row.jumlah_rombel || row.rombel_count || row.rombels || 1);
+
+        if (grade >= 1 && grade <= 9) {
+          students[grade] = count;
+          rombels[grade] = rombelCount;
+        }
+      });
+    } catch (e) {
+      console.error("Gagal mengurai JSON Dapodik:", e);
+    }
+  } else {
+    // Parser XML sederhana menggunakan regex/string ops untuk kompatibilitas Next.js Edge & Client
+    try {
+      const parser = new DOMParser();
+      const xmlDoc = parser.parseFromString(fileContent, "text/xml");
+      const items = xmlDoc.getElementsByTagName("rombel") || xmlDoc.getElementsByTagName("kelas");
+
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        const gradeText = item.getElementsByTagName("tingkat_kelas")[0]?.textContent || item.getAttribute("grade") || "0";
+        const studentsText = item.getElementsByTagName("jumlah_siswa")[0]?.textContent || item.getAttribute("students") || "0";
+        const rombelText = item.getElementsByTagName("jumlah_rombel")[0]?.textContent || item.getAttribute("rombels") || "1";
+
+        const grade = Number(gradeText);
+        if (grade >= 1 && grade <= 9) {
+          students[grade] = Number(studentsText);
+          rombels[grade] = Number(rombelText);
+        }
+      }
+    } catch (e) {
+      console.error("Gagal mengurai XML Dapodik:", e);
+    }
+  }
+
+  return { students, rombels };
 }
