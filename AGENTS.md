@@ -42,20 +42,26 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 ---
 
-## 3. Modul Bisnis & Kepatuhan Regulasi (Permendikbudristek No. 63/2022 & 63/2023)
+## 3. Modul Bisnis & Kepatuhan Regulasi (Permendikbudristek No. 63/2022 & Permendikdasmen No. 8/2026)
 1. **Kalkulator Pagu & Penyaluran Bertahap**:
    - Pagu BOS Reguler = Siswa Riil x Satuan Biaya Wilayah (Default Zona 5 Kab. Pulau Taliabu/Maluku Utara).
    - Penyaluran Tahap 1 (50%) + SiLPA tahun lalu; Penyaluran Tahap 2 (50%).
 2. **Kalkulator Pengadaan Buku HET Kurikulum Merdeka**:
    - Master katalog buku Fase A (Kls 1-2), B (Kls 3-4), C (Kls 5-6), D (Kls 7-9).
    - Zonasi HET 1 s.d 5 + Estimasi Ongkir SIPLah per eksemplar.
-   - *Smart Guard Alert*: Peringatan dini jika belanja buku melampaui rekomendasi 20% pagu.
+   - Wajib minimal 10% pagu dialokasikan untuk pengadaan buku (Juknis BOSP 2026).
 3. **Simulator Pergeseran Pre-ARKAS (Zero-Balance Validator)**:
-   - Pengujian mutasi belanja real-time sebelum diajukan ke dinas/ARKAS.
+   - Pengujian mutasi belanja real-time sebelum diajukan ke dinas/ARKAS 4.
    - Proteksi saldo anti-defisit/minus.
-   - Validasi batas maksimal belanja honor guru Non-ASN (maksimal 50%).
-4. **Validasi Honor Guru Honorer (Pasal 40)**:
-   - Validasi 4 kriteria sah: Status Non-ASN, Aktif di Dapodik, Memiliki NUPTK resmi, dan Belum menerima sertifikasi TPG (Pencegah temuan TGR BPK).
+   - Validasi batas honor guru Non-ASN berbasis jenis sekolah (lihat Seksi 4 di bawah).
+   - Validasi batas sarpras rekomendasi maksimal 20% pagu.
+   - Validasi kewajiban minimum buku 10% pagu.
+4. **Validasi Honor Guru Honorer (Pasal 40 & Permendikdasmen No. 8/2026)**:
+   - Validasi 4 kriteria sah: Status Non-ASN, Aktif di Dapodik, Memiliki NUPTK resmi, Belum menerima sertifikasi TPG.
+   - **Batas Honor Sekolah Negeri: MAKSIMAL 20% pagu** (Permendikdasmen No. 8 Tahun 2026).
+   - **Batas Honor Sekolah Swasta/PAUD/Kesetaraan: MAKSIMAL 40% pagu** (Permendikdasmen No. 8 Tahun 2026).
+   - Deteksi jenis sekolah dilakukan otomatis dari nama sekolah di profil (kata "swasta" = 40%, selainnya = 20%).
+   - Konstanta regulasi terpusat di `lib/calculations/budget-shift.ts`: `HONOR_LIMIT_NEGERI=20`, `HONOR_LIMIT_SWASTA=40`, `BUKU_MINIMUM=10`.
 5. **Daya & Jasa Terkunci (12 Bulan)**:
    - Penguncian anggaran rutin listrik PLN, internet sekolah, air, dan langganan software agar tidak tergeser.
 6. **Mitigasi Penalti PMK Kemenkeu**:
@@ -78,4 +84,20 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 14. **Larangan Keras Fitur Fiktif Aplikasi Pemerintah**:
     - Dilarang keras berasumsi atau menawarkan fitur impor/ekspor data langsung secara otomatis antara PLANARKA dengan aplikasi resmi pemerintah (seperti Dapodik desktop dan ARKAS desktop) jika aplikasi pemerintah tersebut sebenarnya mengunci akses datanya.
     - Semua integrasi pertukaran data wajib dijelaskan secara jujur dan realistis sesuai batasan lapangan (misalnya: membaca file Excel dari portal SP Datadik, dan menyalin manual Excel PLANARKA ke ARKAS desktop).
+
+---
+
+## 4. Referensi Regulasi Definitif (Wajib Dipatuhi Agen)
+
+| Regulasi | Pokok Aturan | Nilai |
+|---|---|---|
+| Permendikdasmen No. 8/2026 | Batas honor Non-ASN sekolah negeri | Maks 20% pagu |
+| Permendikdasmen No. 8/2026 | Batas honor Non-ASN sekolah swasta/PAUD | Maks 40% pagu |
+| Permendikdasmen No. 8/2026 | Kewajiban pengadaan buku minimum | Min 10% pagu |
+| Permendikbudristek No. 63/2023 | Batas sarpras pemeliharaan ringan | Maks 20% pagu |
+| PMK Kemenkeu | Batas kas tunai brankas sekolah | Maks Rp 10.000.000 |
+| PMK Kemenkeu | Batas saldo Tahap 1 agar Tahap 2 tidak dipotong | Sisa > 20% pagu |
+| ARKAS 4 versi 4.2.18 | Referensi sistem penganggaran resmi | Mei 2026 |
+
+> Agen dilarang keras menggunakan angka batas regulasi yang berbeda dari tabel di atas tanpa bukti pembaruan regulasi resmi yang terverifikasi dari sumber Kemendikdasmen atau Kemenkeu.
 
