@@ -3,13 +3,15 @@ import { ShiftItem } from "@/lib/calculations/budget-shift";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { formatRupiah } from "@/lib/utils";
+import { Trash2 } from "lucide-react";
 
 interface ShiftMatrixTableProps {
   items: ShiftItem[];
   onDeltaChange: (id: string, newDelta: number) => void;
+  onDelete?: (id: string) => void;
 }
 
-export function ShiftMatrixTable({ items, onDeltaChange }: ShiftMatrixTableProps) {
+export function ShiftMatrixTable({ items, onDeltaChange, onDelete }: ShiftMatrixTableProps) {
   return (
     <Card className="p-0 overflow-hidden">
       <table className="w-full text-left text-xs border-collapse">
@@ -20,7 +22,8 @@ export function ShiftMatrixTable({ items, onDeltaChange }: ShiftMatrixTableProps
             <th className="p-3 font-semibold">Anggaran Awal</th>
             <th className="p-3 font-semibold">Nilai Pergeseran (+/-)</th>
             <th className="p-3 font-semibold">Anggaran Akhir</th>
-            <th className="p-3 font-semibold text-right">Status</th>
+            <th className="p-3 font-semibold">Status</th>
+            {onDelete && <th className="p-3 font-semibold text-right">Aksi</th>}
           </tr>
         </thead>
         <tbody className="divide-y divide-zinc-200/80">
@@ -45,7 +48,7 @@ export function ShiftMatrixTable({ items, onDeltaChange }: ShiftMatrixTableProps
                 <td className={`p-3 font-bold ${isDeficit ? "text-rose-600" : "text-zinc-900"}`}>
                   {formatRupiah(item.finalBudget)}
                 </td>
-                <td className="p-3 text-right">
+                <td className="p-3">
                   {isDeficit ? (
                     <Badge variant="danger">Defisit</Badge>
                   ) : item.shiftDelta !== 0 ? (
@@ -54,6 +57,17 @@ export function ShiftMatrixTable({ items, onDeltaChange }: ShiftMatrixTableProps
                     <Badge variant="default">Tetap</Badge>
                   )}
                 </td>
+                {onDelete && (
+                  <td className="p-3 text-right">
+                    <button
+                      onClick={() => onDelete(item.id)}
+                      className="text-rose-600 hover:bg-rose-50 p-1.5 rounded-lg transition-colors inline-flex"
+                      title="Hapus Kegiatan"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </td>
+                )}
               </tr>
             );
           })}

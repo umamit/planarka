@@ -9,18 +9,11 @@ import { ShiftMatrixTable } from "@/components/budget/ShiftMatrixTable";
 import { useSchool } from "@/lib/context/SchoolContext";
 import { formatRupiah } from "@/lib/utils";
 import { createClient } from "@supabase/supabase-js";
-import { RotateCcw, AlertTriangle, Save, Loader2 } from "lucide-react";
+import { RotateCcw, AlertTriangle, Save, Loader2, Plus, Trash2 } from "lucide-react";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
-const DEFAULT_ITEMS: Omit<ShiftItem, "id">[] = [
-  { snpCode: "SNP-3", accountCode: "5.2.05.01.01.0001", activityName: "Pengadaan Buku Teks Siswa Kurikulum Merdeka", initialBudget: 45000000, shiftDelta: 0, finalBudget: 45000000 },
-  { snpCode: "SNP-5", accountCode: "5.1.02.02.01.0061", activityName: "Pemeliharaan & Pengecatan Ruang Kelas Ringan", initialBudget: 20000000, shiftDelta: 0, finalBudget: 20000000, isMaintenanceSarpras: true },
-  { snpCode: "SNP-4", accountCode: "5.1.02.02.01.0026", activityName: "Honorarium Guru Honorer / Non-ASN (4 Orang)", initialBudget: 72000000, shiftDelta: 0, finalBudget: 72000000, isHonorNonAsn: true },
-  { snpCode: "SNP-7", accountCode: "5.1.02.02.01.0014", activityName: "Langganan Akses Internet Sekolah 12 Bulan", initialBudget: 18000000, shiftDelta: 0, finalBudget: 18000000 },
-];
 
 export default function BudgetShiftSimulatorPage() {
   const { profile } = useSchool();
@@ -28,6 +21,17 @@ export default function BudgetShiftSimulatorPage() {
   const [totalPagu, setTotalPagu] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+
+  // State Form Tambah Item
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newItem, setNewItem] = useState({
+    snpCode: "SNP-1",
+    accountCode: "",
+    activityName: "",
+    initialBudget: 0,
+    isHonorNonAsn: false,
+    isMaintenanceSarpras: false,
+  });
 
   useEffect(() => {
     fetchData();
@@ -38,7 +42,6 @@ export default function BudgetShiftSimulatorPage() {
     setLoading(true);
 
     try {
-      // 1. Dapatkan tenant_id dari tabel tenants_schools
       const { data: school } = await supabase
         .from("tenants_schools")
         .select("id")
@@ -46,7 +49,7 @@ export default function BudgetShiftSimulatorPage() {
         .single();
 
       if (school) {
-        // 2. Ambil total pagu real dari database bos_allocations
+        // Ambil pagu real
         const { data: alloc } = await supabase
           .from("bos_allocations")
           .select("bos_regular_total, bos_performance_total, silpa_previous_year")
@@ -59,14 +62,14 @@ export default function BudgetShiftSimulatorPage() {
           setTotalPagu(paguReal);
         }
 
-        // 3. Ambil data pergeseran anggaran dari rkas_budget_items
+        // Ambil item RKAS
         const { data: dbItems } = await supabase
           .from("rkas_budget_items")
           .select("*")
           .eq("tenant_id", school.id)
           .eq("fiscal_year", profile.fiscalYear);
 
-        if (dbItems && dbItems.length > 0) {
+        if (dbItems) {
           const mappedItems: ShiftItem[] = dbItems.map((di: any) => ({
             id: di.id,
             snpCode: di.snp_code,
@@ -79,41 +82,6 @@ export default function BudgetShiftSimulatorPage() {
             isMaintenanceSarpras: di.is_routine_utility,
           }));
           setItems(mappedItems);
-        } else {
-          // Jika belum ada data pergeseran di database, buat data default di DB
-          const inserts = DEFAULT_ITEMS.map((di) => ({
-            tenant_id: school.id,
-            fiscal_year: profile.fiscalYear,
-            snp_code: di.snpCode,
-            snp_name: di.snpCode === "SNP-3" ? "Standar Proses" : di.snpCode === "SNP-5" ? "Standar Sarpras" : di.snpCode === "SNP-4" ? "Standar Pendidik" : "Standar Pengelolaan",
-            account_code: di.accountCode,
-            account_name: di.activityName,
-            activity_name: di.activityName,
-            initial_budget: di.initialBudget,
-            shifted_amount: di.shiftDelta,
-            final_budget: di.finalBudget,
-            is_non_asn_honor: di.isHonorNonAsn || false,
-            is_routine_utility: di.isMaintenanceSarpras || false,
-          }));
-
-          const { data: newDbItems } = await supabase
-            .from("rkas_budget_items")
-            .insert(inserts)
-            .select();
-
-          if (newDbItems) {
-            setItems(newDbItems.map((di: any) => ({
-              id: di.id,
-              snpCode: di.snp_code,
-              accountCode: di.account_code,
-              activityName: di.activity_name,
-              initialBudget: Number(di.initial_budget),
-              shiftDelta: Number(di.shifted_amount),
-              finalBudget: Number(di.final_budget),
-              isHonorNonAsn: di.is_non_asn_honor,
-              isMaintenanceSarpras: di.is_routine_utility,
-            })));
-          }
         }
       }
     } catch (e) {
@@ -121,6 +89,61 @@ export default function BudgetShiftSimulatorPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleAddItem = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newItem.accountCode || !newItem.activityName || !profile.npsn) return;
+
+    try {
+      const { data: school } = await supabase
+        .from("tenants_schools")
+        .select("id")
+        .eq("npsn", profile.npsn)
+        .single();
+
+      if (school) {
+        const { error } = await supabase.from("rkas_budget_items").insert([
+          {
+            tenant_id: school.id,
+            fiscal_year: profile.fiscalYear,
+            snp_code: newItem.snpCode,
+            snp_name: newItem.snpCode === "SNP-3" ? "Standar Proses" : newItem.snpCode === "SNP-5" ? "Standar Sarpras" : newItem.snpCode === "SNP-4" ? "Standar Pendidik" : "Standar Lainnya",
+            account_code: newItem.accountCode,
+            account_name: newItem.activityName,
+            activity_name: newItem.activityName,
+            initial_budget: newItem.initialBudget,
+            shifted_amount: 0,
+            final_budget: newItem.initialBudget,
+            is_non_asn_honor: newItem.isHonorNonAsn,
+            is_routine_utility: newItem.isMaintenanceSarpras,
+          },
+        ]);
+
+        if (!error) {
+          setShowAddForm(false);
+          setNewItem({
+            snpCode: "SNP-1",
+            accountCode: "",
+            activityName: "",
+            initialBudget: 0,
+            isHonorNonAsn: false,
+            isMaintenanceSarpras: false,
+          });
+          fetchData();
+        } else {
+          alert("Gagal menambahkan item anggaran.");
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleDeleteItem = async (id: string) => {
+    if (!confirm("Hapus item kegiatan anggaran ini?")) return;
+    const { error } = await supabase.from("rkas_budget_items").delete().eq("id", id);
+    if (!error) fetchData();
   };
 
   const handleDeltaChange = (id: string, newDelta: number) => {
@@ -185,6 +208,9 @@ export default function BudgetShiftSimulatorPage() {
           <p className="text-xs text-zinc-500 mt-1">Uji Keseimbangan (Zero-Balance), Batas 50% Honor, dan Anti-Defisit Sebelum Pengesahan Dinas</p>
         </div>
         <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => setShowAddForm(!showAddForm)}>
+            <Plus className="h-3.5 w-3.5 mr-1" /> Tambah Kegiatan
+          </Button>
           <Button variant="outline" size="sm" onClick={handleReset} disabled={saving}>
             <RotateCcw className="h-3.5 w-3.5 mr-1" /> Reset
           </Button>
@@ -194,10 +220,101 @@ export default function BudgetShiftSimulatorPage() {
             ) : (
               <Save className="h-3.5 w-3.5 mr-1" />
             )}
-            Simpan Perubahan ke Cloud
+            Simpan ke Cloud
           </Button>
         </div>
       </div>
+
+      {showAddForm && (
+        <Card className="space-y-4 max-w-xl">
+          <CardHeader className="p-0">
+            <CardTitle className="text-sm">Tambah Rencana Kegiatan Anggaran Sekolah (RKAS)</CardTitle>
+          </CardHeader>
+          <form onSubmit={handleAddItem} className="space-y-3 text-xs">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="font-semibold text-zinc-700 block mb-1">Kode Akun Rekening</label>
+                <input
+                  type="text"
+                  required
+                  value={newItem.accountCode}
+                  onChange={(e) => setNewItem({ ...newItem, accountCode: e.target.value })}
+                  placeholder="Contoh: 5.2.05.01.01.0001"
+                  className="w-full h-9 rounded-xl border border-zinc-200 px-3 font-semibold focus:outline-none focus:border-zinc-900"
+                />
+              </div>
+              <div>
+                <label className="font-semibold text-zinc-700 block mb-1">Standar Nasional Pendidikan (SNP)</label>
+                <select
+                  value={newItem.snpCode}
+                  onChange={(e) => setNewItem({ ...newItem, snpCode: e.target.value })}
+                  className="w-full h-9 rounded-xl border border-zinc-200 bg-white px-2 focus:outline-none focus:border-zinc-900"
+                >
+                  {["SNP-1", "SNP-2", "SNP-3", "SNP-4", "SNP-5", "SNP-6", "SNP-7", "SNP-8"].map((code) => (
+                    <option key={code} value={code}>{code}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label className="font-semibold text-zinc-700 block mb-1">Nama Rencana Kegiatan (Uraian)</label>
+              <input
+                type="text"
+                required
+                value={newItem.activityName}
+                onChange={(e) => setNewItem({ ...newItem, activityName: e.target.value })}
+                placeholder="Contoh: Pengadaan Buku Teks Utama Kelas 1 Merdeka"
+                className="w-full h-9 rounded-xl border border-zinc-200 px-3 font-semibold focus:outline-none focus:border-zinc-900"
+              />
+            </div>
+
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <label className="font-semibold text-zinc-700 block mb-1">Anggaran Awal (Rp)</label>
+                <input
+                  type="number"
+                  required
+                  value={newItem.initialBudget}
+                  onChange={(e) => setNewItem({ ...newItem, initialBudget: Number(e.target.value) })}
+                  className="w-full h-9 rounded-xl border border-zinc-200 px-3 font-semibold focus:outline-none focus:border-zinc-900"
+                />
+              </div>
+              <div>
+                <label className="font-semibold text-zinc-700 block mb-1">Kategori Honor Guru?</label>
+                <select
+                  value={String(newItem.isHonorNonAsn)}
+                  onChange={(e) => setNewItem({ ...newItem, isHonorNonAsn: e.target.value === "true" })}
+                  className="w-full h-9 rounded-xl border border-zinc-200 bg-white px-2 focus:outline-none focus:border-zinc-900"
+                >
+                  <option value="false">Bukan</option>
+                  <option value="true">Ya (Honor Guru)</option>
+                </select>
+              </div>
+              <div>
+                <label className="font-semibold text-zinc-700 block mb-1">Kategori Sarpras?</label>
+                <select
+                  value={String(newItem.isMaintenanceSarpras)}
+                  onChange={(e) => setNewItem({ ...newItem, isMaintenanceSarpras: e.target.value === "true" })}
+                  className="w-full h-9 rounded-xl border border-zinc-200 bg-white px-2 focus:outline-none focus:border-zinc-900"
+                >
+                  <option value="false">Bukan</option>
+                  <option value="true">Ya (Pemeliharaan)</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <Button type="button" variant="ghost" size="sm" onClick={() => setShowAddForm(false)}>
+                Batal
+              </Button>
+              <Button type="submit" size="sm">
+                Tambah Item
+              </Button>
+            </div>
+          </form>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
@@ -251,9 +368,19 @@ export default function BudgetShiftSimulatorPage() {
         </Card>
       )}
 
-      <Card className="p-0 overflow-hidden">
-        <ShiftMatrixTable items={items} onDeltaChange={handleDeltaChange} />
-      </Card>
+      {items.length === 0 ? (
+        <Card className="py-12 text-center text-xs text-zinc-400">
+          Belum ada kegiatan anggaran yang didaftarkan. Gunakan tombol &quot;Tambah Kegiatan&quot; di atas untuk mulai.
+        </Card>
+      ) : (
+        <Card className="p-0 overflow-hidden">
+          <ShiftMatrixTable items={items} onDeltaChange={handleDeltaChange} onDelete={handleDeleteItem} />
+          
+          <div className="p-4 bg-zinc-50 border-t border-zinc-100 flex justify-end text-xs">
+            <span className="text-zinc-500">Seluruh data disinkronisasi langsung ke Supabase Cloud.</span>
+          </div>
+        </Card>
+      )}
     </div>
   );
 }
