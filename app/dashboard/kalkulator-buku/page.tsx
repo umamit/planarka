@@ -1,26 +1,147 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { SAMPLE_BOOKS } from "@/lib/constants/sample-books";
-import { HET_ZONES, DEFAULT_HET_ZONE } from "@/lib/constants/het-zones";
+import { HET_ZONES } from "@/lib/constants/het-zones";
 import { calculateBookProcurement } from "@/lib/calculations/book-procurement";
-import { DapodikImportModal } from "@/components/books/DapodikImportModal";
-import { formatRupiah, formatNumber } from "@/lib/utils";
-import { CheckCircle2, Info } from "lucide-react";
+import { useSchool } from "@/lib/context/SchoolContext";
+import { formatRupiah } from "@/lib/utils";
+import { createClient } from "@supabase/supabase-js";
+import { Save, Loader2, CheckCircle, AlertTriangle } from "lucide-react";
 
-export default function BookProcurementCalculatorPage() {
-  const [hetZone, setHetZone] = useState<number>(DEFAULT_HET_ZONE);
-  const [shippingUnit] = useState<number>(2500);
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+export default function BookProcurementPage() {
+  const { profile } = useSchool();
+  const [hetZone, setHetZone] = useState<number>(5); // Default Zona 5 Pulau Taliabu
   const [phaseFilter, setPhaseFilter] = useState<string>("ALL");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
 
-  const [students, setStudents] = useState<{ [grade: number]: number }>({ 1: 32, 2: 30, 4: 28, 5: 35, 7: 64 });
-  const [rombels, setRombels] = useState<{ [grade: number]: number }>({ 1: 1, 2: 1, 4: 1, 5: 1, 7: 2 });
+  const [students, setStudents] = useState<{ [grade: number]: number }>({ 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0 });
+  const [rombels, setRombels] = useState<{ [grade: number]: number }>({ 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0 });
+  const [estimatedPagu, setEstimatedPagu] = useState<number>(0);
 
-  const handleDapodikData = (newStudents: { [grade: number]: number }, newRombels: { [grade: number]: number }) => {
-    setStudents(newStudents);
-    setRombels(newRombels);
+  useEffect(() => {
+    fetchDapodikData();
+  }, [profile.npsn, profile.fiscalYear]);
+
+  const fetchDapodikData = async () => {
+    if (!profile.npsn) return;
+    setLoading(true);
+
+    try {
+      const { data: school } = await supabase
+        .from("tenants_schools")
+        .select("id, het_zone")
+        .eq("npsn", profile.npsn)
+        .single();
+
+      if (school) {
+        if (school.het_zone) setHetZone(Number(school.het_zone));
+
+        const { data: alloc } = await supabase
+          .from("bos_allocations")
+          .select("*")
+          .eq("tenant_id", school.id)
+          .eq("fiscal_year", profile.fiscalYear)
+          .single();
+
+        if (alloc) {
+          const pagu = Number(alloc.bos_regular_total) + Number(alloc.bos_performance_total) + Number(alloc.silpa_previous_year);
+          setEstimatedPagu(pagu);
+
+          // Map data siswa
+          setStudents({
+            1: Number(alloc.students_grade_1) || 0,
+            2: Number(alloc.students_grade_2) || 0,
+            3: Number(alloc.students_grade_3) || 0,
+            4: Number(alloc.students_grade_4) || 0,
+            5: Number(alloc.students_grade_5) || 0,
+            6: Number(alloc.students_grade_6) || 0,
+            7: Number(alloc.students_grade_7) || 0,
+            8: Number(alloc.students_grade_8) || 0,
+            9: Number(alloc.students_grade_9) || 0,
+          });
+
+          // Map data rombel
+          setRombels({
+            1: Number(alloc.rombels_grade_1) || 0,
+            2: Number(alloc.rombels_grade_2) || 0,
+            3: Number(alloc.rombels_grade_3) || 0,
+            4: Number(alloc.rombels_grade_4) || 0,
+            5: Number(alloc.rombels_grade_5) || 0,
+            6: Number(alloc.rombels_grade_6) || 0,
+            7: Number(alloc.rombels_grade_7) || 0,
+            8: Number(alloc.rombels_grade_8) || 0,
+            9: Number(alloc.rombels_grade_9) || 0,
+          });
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSaveDapodik = async () => {
+    if (!profile.npsn) return;
+    setSaving(true);
+
+    try {
+      const { data: school } = await supabase
+        .from("tenants_schools")
+        .select("id")
+        .eq("npsn", profile.npsn)
+        .single();
+
+      if (school) {
+        const { error } = await supabase
+          .from("bos_allocations")
+          .upsert([
+            {
+              tenant_id: school.id,
+              fiscal_year: profile.fiscalYear,
+              students_grade_1: students[1],
+              students_grade_2: students[2],
+              students_grade_3: students[3],
+              students_grade_4: students[4],
+              students_grade_5: students[5],
+              students_grade_6: students[6],
+              students_grade_7: students[7],
+              students_grade_8: students[8],
+              students_grade_9: students[9],
+              rombels_grade_1: rombels[1],
+              rombels_grade_2: rombels[2],
+              rombels_grade_3: rombels[3],
+              rombels_grade_4: rombels[4],
+              rombels_grade_5: rombels[5],
+              rombels_grade_6: rombels[6],
+              rombels_grade_7: rombels[7],
+              rombels_grade_8: rombels[8],
+              rombels_grade_9: rombels[9],
+            },
+          ], { onConflict: "tenant_id, fiscal_year" });
+
+        if (!error) {
+          setSaved(true);
+          setTimeout(() => setSaved(false), 3000);
+        } else {
+          alert("Gagal menyimpan data dapodik.");
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const filteredBooks = phaseFilter === "ALL" 
@@ -32,88 +153,165 @@ export default function BookProcurementCalculatorPage() {
     students,
     rombels,
     hetZone,
-    shippingUnit
+    2500 // Ongkir flat SIPLah per buku
   );
 
-  const estimatedPagu = 0;
-  const bookPaguPercentage = (totalProcurementCost / estimatedPagu) * 100;
+  const bookPaguPercentage = estimatedPagu > 0 ? (totalProcurementCost / estimatedPagu) * 100 : 0;
+  const isExceedingRecommendation = bookPaguPercentage > 20;
+
+  if (loading && profile.npsn) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 space-y-2">
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-zinc-900 border-t-transparent" />
+        <span className="text-xs text-zinc-500 font-medium">Memuat kalkulator buku HET...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-zinc-900">Kalkulator Pengadaan Buku Kurikulum Merdeka</h1>
-          <p className="text-xs text-zinc-500 mt-1">Kalkulasi Fleksibel Berbasis Kebutuhan Riil Siswa Sesuai Permendikbudristek No. 63/2022 & 63/2023</p>
+          <h1 className="text-2xl font-bold tracking-tight text-zinc-900">Kalkulator Pengadaan Buku HET (Kurikulum Merdeka)</h1>
+          <p className="text-xs text-zinc-500 mt-1">Simulasi Kebutuhan Buku Siswa & Guru Sesuai Zonasi HET dan Estimasi Ongkos Kirim SIPLah</p>
         </div>
         <div className="flex items-center gap-2">
-          <label className="text-xs font-semibold text-zinc-700">Zona HET:</label>
-          <select
-            value={hetZone}
-            onChange={(e) => setHetZone(Number(e.target.value))}
-            className="h-9 rounded-xl border border-zinc-200 bg-white px-3 text-xs font-medium text-zinc-900 focus:outline-none"
-          >
-            {HET_ZONES.map((z) => (
-              <option key={z.zone} value={z.zone}>{z.name} - {z.description}</option>
-            ))}
-          </select>
+          <Button variant="primary" size="sm" onClick={handleSaveDapodik} disabled={saving}>
+            {saving ? (
+              <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
+            ) : (
+              <Save className="h-3.5 w-3.5 mr-1" />
+            )}
+            Simpan Rombel & Siswa ke Cloud
+          </Button>
+          {saved && (
+            <span className="text-xs font-semibold text-emerald-700 flex items-center gap-1">
+              <CheckCircle className="h-4 w-4" /> Tersimpan
+            </span>
+          )}
         </div>
       </div>
-
-      <DapodikImportModal onDataImported={handleDapodikData} />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
-          <CardDescription>Total Kebutuhan Buku</CardDescription>
-          <CardTitle className="text-xl font-bold mt-1">{formatNumber(totalExemplars)} Eksemplar</CardTitle>
-          <p className="text-[11px] text-zinc-500 mt-1">Buku Teks Siswa & Panduan Guru</p>
-        </Card>
-        <Card>
-          <CardDescription>Total Anggaran Belanja Buku</CardDescription>
+          <CardDescription>Total Anggaran Buku HET</CardDescription>
           <CardTitle className="text-xl font-bold mt-1">{formatRupiah(totalProcurementCost)}</CardTitle>
-          <p className="text-[11px] text-zinc-500 mt-1">HET Zona {hetZone} + Estimasi Ongkir SIPLah</p>
+          <p className="text-[11px] text-zinc-500 mt-1">Untuk {totalExemplars} Eksemplar (HET + Ongkir)</p>
         </Card>
+
         <Card>
           <div className="flex items-center justify-between">
-            <CardDescription>Porsi Terhadap Total Pagu BOS</CardDescription>
-            <Badge variant="success">Bebas Plafon</Badge>
+            <CardDescription>Rasio Anggaran BOSP</CardDescription>
+            <Badge variant={isExceedingRecommendation ? "warning" : "success"}>
+              {isExceedingRecommendation ? "Saran >20%" : "Ideal (<20%)"}
+            </Badge>
           </div>
-          <CardTitle className="text-xl font-bold mt-1">{bookPaguPercentage.toFixed(1)}% dari Pagu</CardTitle>
-          <p className="text-[11px] text-zinc-500 mt-1">Sesuai Kebutuhan Riil Rombel</p>
+          <CardTitle className="text-xl font-bold mt-1">{bookPaguPercentage.toFixed(1)}%</CardTitle>
+          <p className="text-[11px] text-zinc-500 mt-1">Total Pagu: {formatRupiah(estimatedPagu)}</p>
+        </Card>
+
+        <Card>
+          <CardDescription>Zona HET Aktif</CardDescription>
+          <CardTitle className="text-xl font-bold mt-1">Zona {hetZone}</CardTitle>
+          <p className="text-[11px] text-zinc-500 mt-1">
+            Wilayah HET: {HET_ZONES.find(z => z.zone === hetZone)?.description || "Maluku Utara"}
+          </p>
         </Card>
       </div>
 
-      <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 flex items-start gap-3">
-        <Info className="h-5 w-5 text-zinc-700 shrink-0 mt-0.5" />
-        <div className="text-xs text-zinc-600 leading-relaxed">
-          <strong className="text-zinc-900 font-semibold block mb-0.5">Penjelasan Regulasi Belanja Buku (Permendikbudristek No. 63/2022 & 63/2023):</strong>
-          Pada Juknis BOSP terbaru, <strong>tidak ada lagi batasan maksimal 20% yang kaku</strong> untuk belanja buku teks. Sekolah diberikan fleksibilitas penuh (prinsip fleksibel dan otonom) untuk membelanjakan buku sesuai kebutuhan riil siswa/rombel hingga terpenuhi rasio 1 siswa 1 buku teks utama. Batasan 20% pada versi regulasi lama kini hanya menjadi angka referensi historis.
+      {isExceedingRecommendation && (
+        <Card className="border-amber-200 bg-amber-50/50 p-4 space-y-1">
+          <div className="flex items-center gap-2 text-amber-800 font-semibold text-xs">
+            <AlertTriangle className="h-4.5 w-4.5" />
+            <span>Peringatan Juknis: Belanja Buku Melampaui 20% Pagu</span>
+          </div>
+          <p className="text-xs text-amber-700 leading-relaxed">
+            Belanja buku Anda saat ini mencapai {bookPaguPercentage.toFixed(1)}% dari total pagu BOS. Meskipun pengadaan buku HET diperbolehkan sesuai kebutuhan riil, pastikan prioritas operasional sekolah dasar lainnya tetap tercukupi.
+          </p>
+        </Card>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className="lg:col-span-1 space-y-4">
+          <Card className="p-4 space-y-3">
+            <h3 className="font-bold text-xs text-zinc-800">Ubah Jumlah Siswa & Rombel (Dapodik)</h3>
+            <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((grade) => (
+                <div key={grade} className="grid grid-cols-3 gap-2 items-center text-xs">
+                  <span className="font-semibold text-zinc-700">Kls {grade}</span>
+                  <div>
+                    <label className="text-[9px] text-zinc-400 block">Siswa</label>
+                    <input
+                      type="number"
+                      value={students[grade]}
+                      onChange={(e) => setStudents({ ...students, [grade]: Number(e.target.value) })}
+                      className="w-full h-8 rounded-lg border border-zinc-200 text-center font-mono text-xs focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[9px] text-zinc-400 block">Rombel</label>
+                    <input
+                      type="number"
+                      value={rombels[grade]}
+                      onChange={(e) => setRombels({ ...rombels, [grade]: Number(e.target.value) })}
+                      className="w-full h-8 rounded-lg border border-zinc-200 text-center font-mono text-xs focus:outline-none"
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </div>
+
+        <div className="lg:col-span-3 space-y-4">
+          <div className="flex gap-2">
+            {["ALL", "A", "B", "C", "D"].map((phase) => (
+              <Button
+                key={phase}
+                variant={phaseFilter === phase ? "primary" : "ghost"}
+                size="sm"
+                onClick={() => setPhaseFilter(phase)}
+              >
+                {phase === "ALL" ? "Semua Fase" : `Fase ${phase}`}
+              </Button>
+            ))}
+          </div>
+
+          <Card className="p-0 overflow-hidden">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="bg-zinc-50/80 border-b border-zinc-200 text-zinc-700">
+                  <th className="p-3 font-semibold">Uraian Buku (Kurikulum Merdeka)</th>
+                  <th className="p-3 font-semibold">Sasaran Kelas</th>
+                  <th className="p-3 font-semibold">Harga HET</th>
+                  <th className="p-3 font-semibold">Estimasi Ongkir</th>
+                  <th className="p-3 font-semibold">Pemesanan</th>
+                  <th className="p-3 font-semibold text-right">Subtotal</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-200/80">
+                {items.map((item, idx) => (
+                  <tr key={item.book.id || idx} className="hover:bg-zinc-50/50">
+                    <td className="p-3">
+                      <div className="font-semibold text-zinc-900">{item.book.subjectTitle}</div>
+                      <div className="text-[10px] text-zinc-400 font-medium">Fase {item.book.phase} • {item.book.bookType}</div>
+                    </td>
+                    <td className="p-3 text-zinc-600 font-medium">Kelas {item.book.classGrade}</td>
+                    <td className="p-3">{formatRupiah(item.hetUnitCost)}</td>
+                    <td className="p-3">{formatRupiah(item.shippingUnitCost)}</td>
+                    <td className="p-3 font-medium text-zinc-900">
+                      {item.exemplarsNeeded} eks ({item.studentCount} siswa + {item.book.bookType === "Siswa" ? "0" : "1"} guru)
+                    </td>
+                    <td className="p-3 font-bold text-zinc-950 text-right">
+                      {formatRupiah(item.totalCost)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </Card>
         </div>
       </div>
-
-      <Card className="p-0 overflow-hidden">
-        <table className="w-full text-left text-xs border-collapse">
-          <thead>
-            <tr className="bg-zinc-50/80 border-b border-zinc-200 text-zinc-700">
-              <th className="p-3 font-semibold">Judul Buku & Mata Pelajaran</th>
-              <th className="p-3 font-semibold">Fase / Kelas</th>
-              <th className="p-3 font-semibold">Kebutuhan</th>
-              <th className="p-3 font-semibold">HET Zona {hetZone}</th>
-              <th className="p-3 font-semibold text-right">Total Anggaran</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-zinc-200/80">
-            {items.map((item) => (
-              <tr key={item.book.id} className="hover:bg-zinc-50/50">
-                <td className="p-3 font-medium text-zinc-900">{item.book.subjectTitle}</td>
-                <td className="p-3"><Badge>Fase {item.book.phase} (Kls {item.book.classGrade})</Badge></td>
-                <td className="p-3 font-semibold">{item.exemplarsNeeded} Eks</td>
-                <td className="p-3">{formatRupiah(item.hetUnitCost)}</td>
-                <td className="p-3 font-bold text-zinc-900 text-right">{formatRupiah(item.totalCost)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </Card>
     </div>
   );
 }
