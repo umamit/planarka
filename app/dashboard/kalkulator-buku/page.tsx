@@ -10,7 +10,7 @@ import { calculateBookProcurement } from "@/lib/calculations/book-procurement";
 import { useSchool } from "@/lib/context/SchoolContext";
 import { formatRupiah } from "@/lib/utils";
 import { createClient } from "@supabase/supabase-js";
-import { Save, Loader2, CheckCircle, AlertTriangle } from "lucide-react";
+import { Loader2, AlertTriangle } from "lucide-react";
 import { DapodikUploader } from "@/components/shared/DapodikUploader";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
@@ -22,11 +22,16 @@ export default function BookProcurementPage() {
   const [hetZone, setHetZone] = useState<number>(5); // Default Zona 5 Pulau Taliabu
   const [phaseFilter, setPhaseFilter] = useState<string>("ALL");
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
+  const [autoSaving, setAutoSaving] = useState(false);
 
-  const [students, setStudents] = useState<{ [grade: number]: number }>({ 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0 });
-  const [rombels, setRombels] = useState<{ [grade: number]: number }>({ 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0 });
+  // State siswa & rombel per kelas
+  const [students, setStudents] = useState<{ [grade: number]: number }>({
+    1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0
+  });
+  const [rombels, setRombels] = useState<{ [grade: number]: number }>({
+    1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0
+  });
+
   const [estimatedPagu, setEstimatedPagu] = useState<number>(0);
 
   useEffect(() => {
@@ -45,7 +50,7 @@ export default function BookProcurementPage() {
         .single();
 
       if (school) {
-        if (school.het_zone) setHetZone(Number(school.het_zone));
+        setHetZone(Number(school.het_zone) || 5);
 
         const { data: alloc } = await supabase
           .from("bos_allocations")
@@ -55,34 +60,21 @@ export default function BookProcurementPage() {
           .single();
 
         if (alloc) {
-          const pagu = Number(alloc.bos_regular_total) + Number(alloc.bos_performance_total) + Number(alloc.silpa_previous_year);
-          setEstimatedPagu(pagu);
+          // Ambil pagu real
+          const totalPaguVal = Number(alloc.bos_regular_total) + Number(alloc.bos_performance_total) + Number(alloc.silpa_previous_year);
+          setEstimatedPagu(totalPaguVal);
 
-          // Map data siswa
-          setStudents({
-            1: Number(alloc.students_grade_1) || 0,
-            2: Number(alloc.students_grade_2) || 0,
-            3: Number(alloc.students_grade_3) || 0,
-            4: Number(alloc.students_grade_4) || 0,
-            5: Number(alloc.students_grade_5) || 0,
-            6: Number(alloc.students_grade_6) || 0,
-            7: Number(alloc.students_grade_7) || 0,
-            8: Number(alloc.students_grade_8) || 0,
-            9: Number(alloc.students_grade_9) || 0,
-          });
+          // Map siswa & rombel
+          const newStudents: { [grade: number]: number } = {};
+          const newRombels: { [grade: number]: number } = {};
 
-          // Map data rombel
-          setRombels({
-            1: Number(alloc.rombels_grade_1) || 0,
-            2: Number(alloc.rombels_grade_2) || 0,
-            3: Number(alloc.rombels_grade_3) || 0,
-            4: Number(alloc.rombels_grade_4) || 0,
-            5: Number(alloc.rombels_grade_5) || 0,
-            6: Number(alloc.rombels_grade_6) || 0,
-            7: Number(alloc.rombels_grade_7) || 0,
-            8: Number(alloc.rombels_grade_8) || 0,
-            9: Number(alloc.rombels_grade_9) || 0,
-          });
+          for (let g = 1; g <= 9; g++) {
+            newStudents[g] = Number(alloc[`students_grade_${g}` as keyof typeof alloc]) || 0;
+            newRombels[g] = Number(alloc[`rombels_grade_${g}` as keyof typeof alloc]) || 0;
+          }
+
+          setStudents(newStudents);
+          setRombels(newRombels);
         }
       }
     } catch (e) {
@@ -92,9 +84,12 @@ export default function BookProcurementPage() {
     }
   };
 
-  const handleSaveDapodik = async () => {
+  const handleUpdateDapodik = async (
+    updatedStudents: { [grade: number]: number },
+    updatedRombels: { [grade: number]: number }
+  ) => {
     if (!profile.npsn) return;
-    setSaving(true);
+    setAutoSaving(true);
 
     try {
       const { data: school } = await supabase
@@ -104,45 +99,56 @@ export default function BookProcurementPage() {
         .single();
 
       if (school) {
-        const { error } = await supabase
+        await supabase
           .from("bos_allocations")
           .upsert([
             {
               tenant_id: school.id,
               fiscal_year: profile.fiscalYear,
-              students_grade_1: students[1],
-              students_grade_2: students[2],
-              students_grade_3: students[3],
-              students_grade_4: students[4],
-              students_grade_5: students[5],
-              students_grade_6: students[6],
-              students_grade_7: students[7],
-              students_grade_8: students[8],
-              students_grade_9: students[9],
-              rombels_grade_1: rombels[1],
-              rombels_grade_2: rombels[2],
-              rombels_grade_3: rombels[3],
-              rombels_grade_4: rombels[4],
-              rombels_grade_5: rombels[5],
-              rombels_grade_6: rombels[6],
-              rombels_grade_7: rombels[7],
-              rombels_grade_8: rombels[8],
-              rombels_grade_9: rombels[9],
+              students_grade_1: updatedStudents[1],
+              students_grade_2: updatedStudents[2],
+              students_grade_3: updatedStudents[3],
+              students_grade_4: updatedStudents[4],
+              students_grade_5: updatedStudents[5],
+              students_grade_6: updatedStudents[6],
+              students_grade_7: updatedStudents[7],
+              students_grade_8: updatedStudents[8],
+              students_grade_9: updatedStudents[9],
+              rombels_grade_1: updatedRombels[1],
+              rombels_grade_2: updatedRombels[2],
+              rombels_grade_3: updatedRombels[3],
+              rombels_grade_4: updatedRombels[4],
+              rombels_grade_5: updatedRombels[5],
+              rombels_grade_6: updatedRombels[6],
+              rombels_grade_7: updatedRombels[7],
+              rombels_grade_8: updatedRombels[8],
+              rombels_grade_9: updatedRombels[9],
             },
           ], { onConflict: "tenant_id, fiscal_year" });
-
-        if (!error) {
-          setSaved(true);
-          setTimeout(() => setSaved(false), 3000);
-        } else {
-          alert("Gagal menyimpan data dapodik.");
-        }
       }
     } catch (e) {
-      console.error(e);
+      console.error("Gagal auto-save Dapodik:", e);
     } finally {
-      setSaving(false);
+      setAutoSaving(false);
     }
+  };
+
+  const handleStudentChange = (grade: number, value: number) => {
+    const nextStudents = { ...students, [grade]: value };
+    setStudents(nextStudents);
+    handleUpdateDapodik(nextStudents, rombels);
+  };
+
+  const handleRombelChange = (grade: number, value: number) => {
+    const nextRombels = { ...rombels, [grade]: value };
+    setRombels(nextRombels);
+    handleUpdateDapodik(students, nextRombels);
+  };
+
+  const handleDapodikParsed = ({ students: newStudents, rombels: newRombels }: any) => {
+    setStudents(newStudents);
+    setRombels(newRombels);
+    handleUpdateDapodik(newStudents, newRombels);
   };
 
   const filteredBooks = phaseFilter === "ALL" 
@@ -177,17 +183,10 @@ export default function BookProcurementPage() {
           <p className="text-xs text-zinc-500 mt-1">Simulasi Kebutuhan Buku Siswa & Guru Sesuai Zonasi HET dan Estimasi Ongkos Kirim SIPLah</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="primary" size="sm" onClick={handleSaveDapodik} disabled={saving}>
-            {saving ? (
-              <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
-            ) : (
-              <Save className="h-3.5 w-3.5 mr-1" />
-            )}
-            Simpan Rombel & Siswa ke Cloud
-          </Button>
-          {saved && (
-            <span className="text-xs font-semibold text-emerald-700 flex items-center gap-1">
-              <CheckCircle className="h-4 w-4" /> Tersimpan
+          {autoSaving && (
+            <span className="text-[11px] text-zinc-400 font-medium flex items-center gap-1">
+              <Loader2 className="h-3 w-3 animate-spin text-zinc-500" />
+              Menyimpan perubahan otomatis...
             </span>
           )}
         </div>
@@ -234,12 +233,7 @@ export default function BookProcurementPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <div className="lg:col-span-1 space-y-4">
-          <DapodikUploader
-            onDataParsed={({ students: newStudents, rombels: newRombels }) => {
-              setStudents(newStudents);
-              setRombels(newRombels);
-            }}
-          />
+          <DapodikUploader onDataParsed={handleDapodikParsed} />
 
           <Card className="p-4 space-y-3">
             <h3 className="font-bold text-xs text-zinc-800">Ubah Jumlah Siswa & Rombel (Dapodik)</h3>
@@ -252,7 +246,7 @@ export default function BookProcurementPage() {
                     <input
                       type="number"
                       value={students[grade]}
-                      onChange={(e) => setStudents({ ...students, [grade]: Number(e.target.value) })}
+                      onChange={(e) => handleStudentChange(grade, Number(e.target.value))}
                       className="w-full h-8 rounded-lg border border-zinc-200 text-center font-mono text-xs focus:outline-none"
                     />
                   </div>
@@ -261,7 +255,7 @@ export default function BookProcurementPage() {
                     <input
                       type="number"
                       value={rombels[grade]}
-                      onChange={(e) => setRombels({ ...rombels, [grade]: Number(e.target.value) })}
+                      onChange={(e) => handleRombelChange(grade, Number(e.target.value))}
                       className="w-full h-8 rounded-lg border border-zinc-200 text-center font-mono text-xs focus:outline-none"
                     />
                   </div>

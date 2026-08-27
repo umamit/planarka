@@ -2,13 +2,12 @@
 
 import React, { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { validateCashPosition } from "@/lib/calculations/cash-validator";
 import { useSchool } from "@/lib/context/SchoolContext";
 import { formatRupiah } from "@/lib/utils";
 import { createClient } from "@supabase/supabase-js";
-import { Landmark, Wallet, AlertTriangle, Save, Loader2, CheckCircle2 } from "lucide-react";
+import { Landmark, Wallet, AlertTriangle, Loader2 } from "lucide-react";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
@@ -20,8 +19,7 @@ export default function CashPositionPage() {
   const [bankBalance, setBankBalance] = useState<number>(0);
   const [unpaidTaxes, setUnpaidTaxes] = useState<number>(0);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
+  const [autoSaving, setAutoSaving] = useState(false);
 
   useEffect(() => {
     fetchCashData();
@@ -59,10 +57,9 @@ export default function CashPositionPage() {
     }
   };
 
-  const handleSaveCash = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleUpdateCash = async (cHand: number, bBal: number, uTax: number) => {
     if (!profile.npsn) return;
-    setSaving(true);
+    setAutoSaving(true);
 
     try {
       const { data: school } = await supabase
@@ -72,30 +69,38 @@ export default function CashPositionPage() {
         .single();
 
       if (school) {
-        const { error } = await supabase
+        await supabase
           .from("bos_allocations")
           .upsert([
             {
               tenant_id: school.id,
               fiscal_year: profile.fiscalYear,
-              cash_in_hand: cashInHand,
-              bank_balance: bankBalance,
-              unpaid_taxes: unpaidTaxes,
+              cash_in_hand: cHand,
+              bank_balance: bBal,
+              unpaid_taxes: uTax,
             },
           ], { onConflict: "tenant_id, fiscal_year" });
-
-        if (!error) {
-          setSaved(true);
-          setTimeout(() => setSaved(false), 3000);
-        } else {
-          alert("Gagal menyimpan saldo kas.");
-        }
       }
     } catch (e) {
-      console.error(e);
+      console.error("Gagal auto-save BKU:", e);
     } finally {
-      setSaving(false);
+      setAutoSaving(false);
     }
+  };
+
+  const handleCashInHandChange = (val: number) => {
+    setCashInHand(val);
+    handleUpdateCash(val, bankBalance, unpaidTaxes);
+  };
+
+  const handleBankBalanceChange = (val: number) => {
+    setBankBalance(val);
+    handleUpdateCash(cashInHand, val, unpaidTaxes);
+  };
+
+  const handleUnpaidTaxesChange = (val: number) => {
+    setUnpaidTaxes(val);
+    handleUpdateCash(cashInHand, bankBalance, val);
   };
 
   const result = validateCashPosition({ cashInHand, bankBalance, unpaidTaxes });
@@ -111,13 +116,22 @@ export default function CashPositionPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-zinc-900">Rekonsiliasi & Pengawasan Kas BKU</h1>
-        <p className="text-xs text-zinc-500 mt-1">Audit Kepatuhan Batas Kas Tunai Maksimal Rp10.000.000 (Kesiapan Audit Fisik Cash Opname)</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-zinc-900">Rekonsiliasi & Pengawasan Kas BKU</h1>
+          <p className="text-xs text-zinc-500 mt-1">Audit Kepatuhan Batas Kas Tunai Maksimal Rp10.000.000 (Kesiapan Audit Fisik Cash Opname)</p>
+        </div>
+        <div className="flex items-center gap-2">
+          {autoSaving && (
+            <span className="text-[11px] text-zinc-400 font-medium flex items-center gap-1">
+              <Loader2 className="h-3 w-3 animate-spin text-zinc-500" />
+              Menyimpan perubahan otomatis...
+            </span>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Kolom Kiri: Form Input */}
         <div className="lg:col-span-1">
           <Card className="space-y-4">
             <CardHeader className="p-0">
@@ -125,14 +139,14 @@ export default function CashPositionPage() {
               <CardDescription>Sesuaikan saldo kas per hari ini di database cloud</CardDescription>
             </CardHeader>
 
-            <form onSubmit={handleSaveCash} className="space-y-3 text-xs">
+            <div className="space-y-3 text-xs">
               <div>
                 <label className="font-semibold text-zinc-700 block mb-1">Saldo Tunai di Brankas (Rp)</label>
                 <input
                   type="number"
                   required
                   value={cashInHand}
-                  onChange={(e) => setCashInHand(Number(e.target.value))}
+                  onChange={(e) => handleCashInHandChange(Number(e.target.value))}
                   className="w-full h-9 rounded-xl border border-zinc-200 px-3 font-mono font-bold focus:outline-none focus:border-zinc-900"
                 />
               </div>
@@ -143,7 +157,7 @@ export default function CashPositionPage() {
                   type="number"
                   required
                   value={bankBalance}
-                  onChange={(e) => setBankBalance(Number(e.target.value))}
+                  onChange={(e) => handleBankBalanceChange(Number(e.target.value))}
                   className="w-full h-9 rounded-xl border border-zinc-200 px-3 font-mono font-bold focus:outline-none focus:border-zinc-900"
                 />
               </div>
@@ -154,95 +168,74 @@ export default function CashPositionPage() {
                   type="number"
                   required
                   value={unpaidTaxes}
-                  onChange={(e) => setUnpaidTaxes(Number(e.target.value))}
+                  onChange={(e) => handleUnpaidTaxesChange(Number(e.target.value))}
                   className="w-full h-9 rounded-xl border border-zinc-200 px-3 font-mono font-bold focus:outline-none focus:border-zinc-900"
                 />
               </div>
-
-              <div className="flex items-center gap-2 pt-2">
-                <Button type="submit" className="w-full" disabled={saving}>
-                  {saving ? (
-                    <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
-                  ) : (
-                    <Save className="h-3.5 w-3.5 mr-1" />
-                  )}
-                  Simpan Saldo Kas
-                </Button>
-                {saved && (
-                  <span className="text-[10px] font-semibold text-emerald-700 flex items-center gap-0.5 shrink-0">
-                    <CheckCircle2 className="h-3.5 w-3.5" /> Tersimpan
-                  </span>
-                )}
-              </div>
-            </form>
+            </div>
           </Card>
         </div>
 
-        {/* Kolom Kanan: Hasil Audit */}
-        <div className="lg:col-span-2 space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Card>
-              <div className="flex items-center justify-between">
-                <CardDescription>Batas Kas Tunai (Maksimal)</CardDescription>
-                <Badge variant={!result.isCashInHandExceeded ? "success" : "danger"}>
-                  {!result.isCashInHandExceeded ? "Aman" : "Temuan Audit!"}
+        <div className="lg:col-span-2 space-y-6">
+          <Card className="space-y-6">
+            <CardHeader className="p-0">
+              <div className="flex items-center gap-2">
+                <Landmark className="h-5 w-5 text-zinc-700" />
+                <CardTitle className="text-sm">Audit Posisi Likuiditas & Kepatuhan Kas</CardTitle>
+              </div>
+              <CardDescription>Pemeriksaan saldo riil dan batasan regulasi cash opname kas sekolah</CardDescription>
+            </CardHeader>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+              <div className="p-3 bg-zinc-50 rounded-xl border border-zinc-150 flex items-center justify-between">
+                <div>
+                  <span className="text-zinc-500 font-semibold block">Total Kas Likuid</span>
+                  <span className="text-base font-bold text-zinc-900 block mt-0.5">{formatRupiah(result.totalLiquidCash)}</span>
+                </div>
+                <div className="h-8 w-8 rounded-lg bg-zinc-200/50 flex items-center justify-center text-zinc-600">
+                  <Wallet className="h-4.5 w-4.5" />
+                </div>
+              </div>
+
+              <div className="p-3 bg-zinc-50 rounded-xl border border-zinc-150 flex items-center justify-between">
+                <div>
+                  <span className="text-zinc-500 font-semibold block">Pajak Terutang</span>
+                  <span className="text-base font-bold text-zinc-900 block mt-0.5">{formatRupiah(unpaidTaxes)}</span>
+                </div>
+                <div className="h-8 w-8 rounded-lg bg-zinc-200/50 flex items-center justify-center text-zinc-600">
+                  <Landmark className="h-4.5 w-4.5" />
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-center justify-between text-xs py-1 border-b border-zinc-100">
+                <span className="text-zinc-500">Kepatuhan Kas Brankas (&lt; Rp10jt):</span>
+                <Badge variant={result.isCashInHandExceeded ? "danger" : "success"}>
+                  {result.isCashInHandExceeded ? "Melebihi Batas" : "Patuhi Aturan"}
                 </Badge>
               </div>
-              <CardTitle className={`text-xl font-bold mt-1 ${!result.isCashInHandExceeded ? "text-zinc-950" : "text-rose-600"}`}>
-                {formatRupiah(cashInHand)} / Rp10.000.000
-              </CardTitle>
-            </Card>
-
-            <Card>
-              <div className="flex items-center justify-between">
-                <CardDescription>Total Likuiditas Kas Sekolah</CardDescription>
-                <Badge variant="default">Total BKU</Badge>
+              <div className="flex items-center justify-between text-xs py-1">
+                <span className="text-zinc-500">Tunggakan Setoran Pajak:</span>
+                <Badge variant={result.hasOverdueTaxHolding ? "warning" : "success"}>
+                  {result.hasOverdueTaxHolding ? "Ada Tunggakan" : "Lunas / Bersih"}
+                </Badge>
               </div>
-              <CardTitle className="text-xl font-bold mt-1">{formatRupiah(result.totalLiquidCash)}</CardTitle>
-            </Card>
-          </div>
-
-          <Card className="space-y-4">
-            <CardHeader className="p-0">
-              <CardTitle className="text-sm">Rekomendasi Hasil Pengawasan Kas</CardTitle>
-            </CardHeader>
-            <div className="space-y-3 text-xs leading-relaxed">
-              <div className={`p-4 rounded-xl border flex items-start gap-2.5 ${
-                !result.isCashInHandExceeded ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-rose-200 bg-rose-50 text-rose-800"
-              }`}>
-                {!result.isCashInHandExceeded ? (
-                  <>
-                    <CheckCircle2 className="h-5 w-5 shrink-0 mt-0.5" />
-                    <div>
-                      <div className="font-bold">Buku Kas Tunai Sesuai Standar</div>
-                      <p className="mt-1 text-[11px]">
-                        Kas tunai di brankas sekolah terkontrol di bawah batas maksimal Rp10.000.000. Kondisi ini sangat ideal dan siap menghadapi audit fisik/cash opname sewaktu-waktu oleh BPK.
-                      </p>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <AlertTriangle className="h-5 w-5 shrink-0 mt-0.5" />
-                    <div>
-                      <div className="font-bold">Peringatan: Kas Tunai Melebihi Batas</div>
-                      <p className="mt-1 text-[11px]">
-                        Penyimpanan uang tunai di brankas melebihi batas maksimal Rp10.000.000 sangat berisiko memicu temuan audit kepatuhan kas. Harap segera setorkan sisa uang ke rekening bank sekolah.
-                      </p>
-                    </div>
-                  </>
-                )}
-              </div>
-
-              {result.hasOverdueTaxHolding && (
-                <div className="p-3 bg-amber-50 border border-amber-200 text-amber-900 rounded-xl flex items-start gap-2.5">
-                  <AlertTriangle className="h-4.5 w-4.5 shrink-0 mt-0.5" />
-                  <div>
-                    <div className="font-bold text-[11px]">Tunggakan Setoran Pajak Terdeteksi: {formatRupiah(unpaidTaxes)}</div>
-                    <p className="text-[10px] mt-0.5">Harap segera setor PPN/PPh terutang ke kas negara sebelum melewati masa jatuh tempo pajak untuk menghindari denda administrasi pajak.</p>
-                  </div>
-                </div>
-              )}
             </div>
+
+            {result.warnings.length > 0 && (
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 space-y-1">
+                <div className="font-semibold flex items-center gap-1.5">
+                  <AlertTriangle className="h-4 w-4 text-amber-600" />
+                  Pemberitahuan Audit BKU:
+                </div>
+                <ul className="list-disc pl-5 space-y-0.5">
+                  {result.warnings.map((w, idx) => (
+                    <li key={idx}>{w}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </Card>
         </div>
       </div>
