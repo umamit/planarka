@@ -15,6 +15,65 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
+const TEMPLATE_BUDGET_ACTIVITIES = [
+  {
+    label: "Pilih dari Template Anggaran Utama BOSP...",
+    accountCode: "",
+    activityName: "",
+    snpCode: "SNP-1",
+    isHonorNonAsn: false,
+    isMaintenanceSarpras: false,
+  },
+  {
+    label: "Pengadaan Buku Teks Utama Kurikulum Merdeka (Fase A/B/C/D)",
+    accountCode: "5.2.05.01.01.0001",
+    activityName: "Pengadaan Buku Teks Utama Kurikulum Merdeka",
+    snpCode: "SNP-5",
+    isHonorNonAsn: false,
+    isMaintenanceSarpras: true,
+  },
+  {
+    label: "Pembayaran Honor Bulanan Guru Non-ASN (Guru Honorer)",
+    accountCode: "5.1.02.02.01.0026",
+    activityName: "Pembayaran Honor Bulanan Guru Non-ASN",
+    snpCode: "SNP-4",
+    isHonorNonAsn: true,
+    isMaintenanceSarpras: false,
+  },
+  {
+    label: "Pemeliharaan Ruang Kelas & Sarana Prasarana Sekolah",
+    accountCode: "5.1.02.02.01.0061",
+    activityName: "Pemeliharaan Gedung dan Ruang Kelas Ringan",
+    snpCode: "SNP-5",
+    isHonorNonAsn: false,
+    isMaintenanceSarpras: true,
+  },
+  {
+    label: "Langganan Daya & Jasa Internet Sekolah (12 Bulan)",
+    accountCode: "5.1.02.02.01.0014",
+    activityName: "Langganan Daya & Jasa Akses Internet Sekolah",
+    snpCode: "SNP-7",
+    isHonorNonAsn: false,
+    isMaintenanceSarpras: true,
+  },
+  {
+    label: "Belanja Alat Tulis Kantor (ATK) Pembelajaran Murid",
+    accountCode: "5.1.02.01.01.0052",
+    activityName: "Belanja Alat Tulis Kantor (ATK) Sekolah",
+    snpCode: "SNP-6",
+    isHonorNonAsn: false,
+    isMaintenanceSarpras: false,
+  },
+  {
+    label: "Pengadaan Alat Multimedia & Proyektor Pembelajaran",
+    accountCode: "5.1.02.01.01.0024",
+    activityName: "Pengadaan Alat Multimedia Pembelajaran",
+    snpCode: "SNP-5",
+    isHonorNonAsn: false,
+    isMaintenanceSarpras: true,
+  },
+];
+
 export default function BudgetShiftSimulatorPage() {
   const { profile } = useSchool();
   const [items, setItems] = useState<ShiftItem[]>([]);
@@ -204,6 +263,21 @@ export default function BudgetShiftSimulatorPage() {
     }
   };
 
+  const handleSelectTemplate = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const idx = Number(e.target.value);
+    const template = TEMPLATE_BUDGET_ACTIVITIES[idx];
+    if (template && template.accountCode !== "") {
+      setNewItem({
+        ...newItem,
+        accountCode: template.accountCode,
+        activityName: template.activityName,
+        snpCode: template.snpCode,
+        isHonorNonAsn: template.isHonorNonAsn,
+        isMaintenanceSarpras: template.isMaintenanceSarpras,
+      });
+    }
+  };
+
   const validation = validateBudgetShift(items, totalPagu);
 
   if (loading && profile.npsn) {
@@ -244,15 +318,29 @@ export default function BudgetShiftSimulatorPage() {
             <CardTitle className="text-sm">Tambah Rencana Kegiatan Anggaran Sekolah (RKAS)</CardTitle>
           </CardHeader>
           <form onSubmit={handleAddItem} className="space-y-3 text-xs">
+            <div>
+              <label className="font-semibold text-zinc-700 block mb-1">Pilihan Cepat Kegiatan (Dropdown Utama)</label>
+              <select
+                onChange={handleSelectTemplate}
+                className="w-full h-9 rounded-xl border border-zinc-200 bg-white px-2 focus:outline-none focus:border-zinc-900 font-medium"
+              >
+                {TEMPLATE_BUDGET_ACTIVITIES.map((tpl, idx) => (
+                  <option key={idx} value={idx}>
+                    {tpl.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="font-semibold text-zinc-700 block mb-1">Kode Akun Rekening</label>
+                <label className="font-semibold text-zinc-700 block mb-1">Kode Akun Rekening (Terisi Otomatis)</label>
                 <input
                   type="text"
                   placeholder="Contoh: 5.2.05.01.01.0001"
                   value={newItem.accountCode}
                   onChange={(e) => setNewItem({ ...newItem, accountCode: e.target.value })}
-                  className="w-full h-9 rounded-xl border border-zinc-200 px-3 focus:outline-none focus:border-zinc-900"
+                  className="w-full h-9 rounded-xl border border-zinc-200 px-3 focus:outline-none focus:border-zinc-900 font-mono font-bold"
                   required
                 />
               </div>
@@ -294,7 +382,7 @@ export default function BudgetShiftSimulatorPage() {
                   type="number"
                   value={newItem.initialBudget}
                   onChange={(e) => setNewItem({ ...newItem, initialBudget: Number(e.target.value) })}
-                  className="w-full h-9 rounded-xl border border-zinc-200 px-3 focus:outline-none focus:border-zinc-900"
+                  className="w-full h-9 rounded-xl border border-zinc-200 px-3 focus:outline-none focus:border-zinc-900 font-bold"
                   min="0"
                 />
               </div>
