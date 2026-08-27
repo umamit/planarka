@@ -43,13 +43,21 @@ export default function DistrictLetterPage() {
       }
     }
 
+    doc.setFont("helvetica", "bold");
     doc.setFontSize(11);
-    doc.text(`PEMERINTAH PROVINSI ${profile.province.toUpperCase()}`, 105, 14, { align: "center" });
+    doc.text("PEMERINTAH KABUPATEN PULAU TALIABU", 105, 14, { align: "center" });
+    
+    // DINAS PENDIDIKAN (tanpa garis bawah)
+    doc.setFontSize(12);
     doc.text("DINAS PENDIDIKAN", 105, 19, { align: "center" });
+
     doc.setFontSize(13);
-    doc.text((profile.schoolName || "NAMA SEKOLAH").toUpperCase(), 105, 25, { align: "center" });
-    doc.setFontSize(8.5);
-    doc.text(profile.address || "Alamat Sekolah", 105, 30, { align: "center" });
+    doc.text((profile.schoolName || "SD NEGERI BOBONG").toUpperCase(), 105, 26, { align: "center" });
+    
+    doc.setFont("helvetica", "oblique");
+    doc.setFontSize(8);
+    doc.text(`Alamat: ${profile.address || "Jln. Mansur Sou, Desa Wayo, Kec. Taliabu Barat Kode Pos 97794"} | Website: sdnegeribobong.sch.id`, 105, 31, { align: "center" });
+    
     doc.setLineWidth(0.8);
     doc.line(14, 34, 196, 34);
 
@@ -137,10 +145,10 @@ export default function DistrictLetterPage() {
 
             <div className="bg-zinc-50 p-6 rounded-xl border border-zinc-150 font-mono text-[10px] text-zinc-700 space-y-4 max-w-2xl">
               <div className="text-center font-bold border-b border-zinc-300 pb-2">
-                <div>PEMERINTAH PROVINSI {profile.province.toUpperCase()}</div>
-                <div>DINAS PENDIDIKAN / {profile.district.toUpperCase()}</div>
-                <div className="text-xs">{profile.schoolName.toUpperCase()}</div>
-                <div className="font-normal text-[9px] text-zinc-500 mt-0.5">{profile.address}</div>
+                <div>PEMERINTAH KABUPATEN PULAU TALIABU</div>
+                <div className="text-xs my-0.5">DINAS PENDIDIKAN</div>
+                <div className="text-sm font-extrabold">{profile.schoolName.toUpperCase() || "SD NEGERI BOBONG"}</div>
+                <div className="italic font-normal text-[9px] text-zinc-500 mt-1">Alamat: {profile.address || "Jln. Mansur Sou, Desa Wayo, Kec. Taliabu Barat Kode Pos 97794"} | Website: sdnegeribobong.sch.id</div>
               </div>
 
               <div className="space-y-1">
