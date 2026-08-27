@@ -17,7 +17,7 @@ const STORAGE_KEY = "planarka_rkas_draft_v1";
 const DEFAULT_STATE: PlanarkaDraftState = {
   version: "1.0",
   savedAt: new Date().toISOString(),
-  npsn: "60201829",
+  npsn: "60200589",
   schoolName: "SD Negeri 1 Bobong",
   headmasterName: "Husnita Usman, S.Pd., M.Pd.",
   headmasterNip: "19820514 200801 2 015",

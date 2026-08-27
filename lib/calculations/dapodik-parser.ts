@@ -27,7 +27,7 @@ export function parseDapodikMock(fileName: string): {
 
   return {
     schoolName: "SD Negeri 1 Bobong",
-    npsn: "60201829",
+    npsn: "60200589",
     grades,
     totalAllStudents,
     totalAllRombels,

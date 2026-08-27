@@ -8,9 +8,9 @@ import { verifyLicenseKey } from "@/lib/calculations/license-engine";
 import { Key, CheckCircle2, AlertCircle } from "lucide-react";
 
 export default function LicenseManagementPage() {
-  const [npsn] = useState<string>("60201829");
+  const [npsn] = useState<string>("60200589");
   const [schoolName] = useState<string>("SD Negeri 1 Bobong");
-  const [inputKey, setInputKey] = useState<string>("IBRA-BOS-2026-60201829-1093");
+  const [inputKey, setInputKey] = useState<string>("IBRA-BOS-2026-60200589-0013");
   const [isActivated, setIsActivated] = useState<boolean>(true);
   const [activationMessage, setActivationMessage] = useState<string>("");
 

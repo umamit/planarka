@@ -54,7 +54,7 @@ function LoginForm() {
           maxLength={8}
           value={npsn}
           onChange={(e) => setNpsn(e.target.value)}
-          placeholder="Contoh: 60201829"
+          placeholder="Contoh: 60200589"
           className="w-full h-10 rounded-xl border border-zinc-200 px-3 font-mono text-xs font-semibold focus:border-zinc-900 focus:outline-none"
         />
       </div>

@@ -14,7 +14,7 @@ export default function SpjbGeneratorPage() {
   const { profile } = useSchool();
   const [data, setData] = useState<SpjbData>({
     schoolName: profile.schoolName || "SD Negeri 1 Bobong",
-    npsn: profile.npsn || "60201829",
+    npsn: profile.npsn || "60200589",
     headmasterName: profile.headmasterName || "Husnita Usman, S.Pd., M.Pd.",
     headmasterNip: profile.headmasterNip || "19820514 200801 2 015",
     fiscalYear: profile.fiscalYear || 2026,
