@@ -4,22 +4,53 @@ import React, { useState } from "react";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { useSchool } from "@/lib/context/SchoolContext";
-import { CheckCircle2, School } from "lucide-react";
+import { createClient } from "@supabase/supabase-js";
+import { CheckCircle2, School, Settings, Users, Database } from "lucide-react";
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export default function PengaturanPage() {
-  const { profile, updateProfile, isProfileComplete } = useSchool();
+  const { profile, updateProfile, isProfileComplete, loading: profileLoading } = useSchool();
   const [saved, setSaved] = useState(false);
+  const [dbStats, setDbStats] = useState({ schoolsCount: 0, rkasCount: 0 });
 
   const [form, setForm] = useState({ ...profile });
+  const isSuperadmin = profile.npsn === "00000000";
 
   React.useEffect(() => {
     setForm({ ...profile });
-  }, [profile]);
+    if (isSuperadmin) {
+      fetchStats();
+    }
+  }, [profile, isSuperadmin]);
 
-  const handleSave = () => {
-    updateProfile(form);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+  const fetchStats = async () => {
+    try {
+      const { count: schCount } = await supabase
+        .from("tenants_schools")
+        .select("id", { count: "exact", head: true });
+        
+      const { count: rkCount } = await supabase
+        .from("rkas_budget_items")
+        .select("id", { count: "exact", head: true });
+
+      setDbStats({
+        schoolsCount: schCount || 0,
+        rkasCount: rkCount || 0,
+      });
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleSave = async () => {
+    const success = await updateProfile(form);
+    if (success) {
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    }
   };
 
   const field = (label: string, key: keyof typeof form, type = "text") => (
@@ -34,6 +65,78 @@ export default function PengaturanPage() {
     </div>
   );
 
+  if (profileLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 space-y-2">
+        <div className="h-5 w-5 animate-spin rounded-full border-2 border-zinc-900 border-t-transparent" />
+        <span className="text-xs text-zinc-500 font-medium">Memuat pengaturan...</span>
+      </div>
+    );
+  }
+
+  // 1. Tampilan Khusus Superadmin (Sembunyikan Form Sekolah)
+  if (isSuperadmin) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-zinc-900">Pengaturan Admin Pusat</h1>
+          <p className="text-xs text-zinc-500 mt-1">Konsol identitas pengembang dan pemantauan statistik database PLANARKA</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Card className="flex items-center gap-4">
+            <div className="p-3 bg-zinc-100 rounded-xl">
+              <Users className="h-6 w-6 text-zinc-700" />
+            </div>
+            <div>
+              <CardDescription>Total Sekolah Terdaftar</CardDescription>
+              <CardTitle className="text-2xl font-bold mt-0.5">{dbStats.schoolsCount - 1} Sekolah</CardTitle>
+            </div>
+          </Card>
+          
+          <Card className="flex items-center gap-4">
+            <div className="p-3 bg-zinc-100 rounded-xl">
+              <Database className="h-6 w-6 text-zinc-700" />
+            </div>
+            <div>
+              <CardDescription>Total Rencana Anggaran (RKAS)</CardDescription>
+              <CardTitle className="text-2xl font-bold mt-0.5">{dbStats.rkasCount} Kegiatan</CardTitle>
+            </div>
+          </Card>
+        </div>
+
+        <Card className="space-y-4">
+          <CardHeader className="p-0">
+            <div className="flex items-center gap-2">
+              <Settings className="h-5 w-5 text-zinc-700" />
+              <CardTitle className="text-base">Identitas Developer (IBRA HQ)</CardTitle>
+            </div>
+            <CardDescription>Informasi resmi legalitas pengembang aplikasi PLANARKA</CardDescription>
+          </CardHeader>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+            <div>
+              <span className="text-zinc-500 block font-semibold">Nama Developer</span>
+              <span className="text-zinc-900 font-bold block mt-1">IBRA Digital Engineering</span>
+            </div>
+            <div>
+              <span className="text-zinc-500 block font-semibold">Wilayah Operasional</span>
+              <span className="text-zinc-900 font-bold block mt-1">Maluku Utara / Kab. Pulau Taliabu</span>
+            </div>
+            <div>
+              <span className="text-zinc-500 block font-semibold">Kontak Legal</span>
+              <span className="text-zinc-900 font-bold block mt-1">shot.ann09@gmail.com</span>
+            </div>
+            <div>
+              <span className="text-zinc-500 block font-semibold">Hak Cipta Proyek</span>
+              <span className="text-zinc-900 font-bold block mt-1">Proprietary - All Rights Reserved &copy; 2026</span>
+            </div>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  // 2. Tampilan Sekolah Biasa
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
