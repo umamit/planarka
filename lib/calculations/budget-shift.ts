@@ -19,6 +19,9 @@ export interface ShiftValidationResult {
   honorTotal: number;
   honorPercentage: number;
   isHonorValid: boolean; // Max 50%
+  sarprasTotal: number;
+  sarprasPercentage: number;
+  isSarprasValid: boolean; // Rekomendasi Max 20%
   hasDeficitItem: boolean;
   deficitItems: ShiftItem[];
   warnings: string[];
@@ -32,6 +35,7 @@ export function validateBudgetShift(
   let totalShifted = 0;
   let totalFinal = 0;
   let honorTotal = 0;
+  let sarprasTotal = 0;
   const deficitItems: ShiftItem[] = [];
   const warnings: string[] = [];
 
@@ -49,12 +53,20 @@ export function validateBudgetShift(
     if (item.isHonorNonAsn) {
       honorTotal += finalBudget;
     }
+
+    if (item.isMaintenanceSarpras) {
+      sarprasTotal += finalBudget;
+    }
   });
 
   const netDelta = totalFinal - totalInitial;
   const isBalanced = netDelta === 0;
+  
   const honorPercentage = totalPagu > 0 ? (honorTotal / totalPagu) * 100 : 0;
   const isHonorValid = honorPercentage <= 50;
+
+  const sarprasPercentage = totalPagu > 0 ? (sarprasTotal / totalPagu) * 100 : 0;
+  const isSarprasValid = sarprasPercentage <= 20;
 
   if (!isBalanced) {
     warnings.push(`Pergeseran belum balance. Selisih bersih: ${netDelta > 0 ? "+" : ""}${netDelta}`);
@@ -62,6 +74,10 @@ export function validateBudgetShift(
 
   if (!isHonorValid) {
     warnings.push(`Alokasi honor Non-ASN (${honorPercentage.toFixed(1)}%) melampaui batas maksimal 50% pagu BOS.`);
+  }
+
+  if (!isSarprasValid) {
+    warnings.push(`Rekomendasi Juknis: Belanja pemeliharaan Sarpras (${sarprasPercentage.toFixed(1)}%) sebaiknya tidak melebihi 20% dari total pagu BOS.`);
   }
 
   return {
@@ -73,6 +89,9 @@ export function validateBudgetShift(
     honorTotal,
     honorPercentage,
     isHonorValid,
+    sarprasTotal,
+    sarprasPercentage,
+    isSarprasValid,
     hasDeficitItem: deficitItems.length > 0,
     deficitItems,
     warnings,

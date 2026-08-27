@@ -422,7 +422,7 @@ export default function BudgetShiftSimulatorPage() {
         </Card>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-6">
         <Card className="space-y-1">
           <div className="flex items-center justify-between">
             <span className="text-xs text-zinc-500 font-semibold">Status Keseimbangan</span>
@@ -449,18 +449,28 @@ export default function BudgetShiftSimulatorPage() {
 
         <Card className="space-y-1">
           <div className="flex items-center justify-between">
-            <span className="text-xs text-zinc-500 font-semibold">Status Pelanggaran Batas</span>
+            <span className="text-xs text-zinc-500 font-semibold">Batas Honor Guru</span>
             <Badge variant={validation.isHonorValid ? "success" : "danger"}>
               {validation.isHonorValid ? "Aman" : "Melanggar"}
             </Badge>
           </div>
-          <div className={`text-sm font-bold mt-1 ${validation.isHonorValid ? "text-emerald-700" : "text-rose-600"}`}>
-            {!validation.isHonorValid 
-              ? `Rasio Honor Guru ${validation.honorPercentage.toFixed(1)}% (Melebihi Batas 50%)`
-              : "Lolos Verifikasi Juknis BOSP"
-            }
+          <div className={`text-base font-bold mt-1 ${validation.isHonorValid ? "text-emerald-700" : "text-rose-600"}`}>
+            {validation.honorPercentage.toFixed(1)}% (Max 50%)
           </div>
-          <p className="text-[10px] text-zinc-400">Pencegah Temuan BPK</p>
+          <p className="text-[10px] text-zinc-400">Rasio Belanja Guru Non-ASN</p>
+        </Card>
+
+        <Card className="space-y-1">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-zinc-500 font-semibold">Batas Belanja Sarpras</span>
+            <Badge variant={validation.isSarprasValid ? "success" : "warning"}>
+              {validation.isSarprasValid ? "Aman" : "Saran >20%"}
+            </Badge>
+          </div>
+          <div className={`text-base font-bold mt-1 ${validation.isSarprasValid ? "text-emerald-700" : "text-amber-600"}`}>
+            {validation.sarprasPercentage.toFixed(1)}% (Saran 20%)
+          </div>
+          <p className="text-[10px] text-zinc-400">Pemeliharaan Ringan Sarpras</p>
         </Card>
       </div>
 
