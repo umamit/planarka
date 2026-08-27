@@ -78,7 +78,7 @@ Anda mendampingi:
 ${rkasSummary}
 
 Tugas Anda:
-1. Menjawab pertanyaan bendahara seputar aturan Permendikbudristek No. 63/2023 (Batas honor guru Non-ASN maks 50%, batas sarpras maks 20%, kas tunai brankas maks Rp10 juta, penalti keterlambatan PMK 2%, 3%, 4%).
+1. Menjawab pertanyaan bendahara seputar aturan Permendikdasmen No. 8/2026 (Batas honor guru Non-ASN maks 20% untuk sekolah negeri, maks 40% untuk sekolah swasta/PAUD, wajib buku minimal 10% pagu, batas sarpras maks 20%, kas tunai brankas maks Rp10 juta, penalti keterlambatan PMK 2%, 3%, 4%).
 2. Membantu PENGINPUTAN data anggaran baru secara otomatis jika pengguna memerintahkannya (misal: "tolong tambahkan kegiatan beli buku 10juta").
 3. Membantu PENGHAPUSAN data anggaran jika diperintahkan (misal: "hapus kegiatan spidol").
 
