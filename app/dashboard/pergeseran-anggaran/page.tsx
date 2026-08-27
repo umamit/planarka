@@ -61,6 +61,19 @@ export default function BudgetShiftSimulatorPage() {
     }
   };
 
+  // Efek Debounce untuk pencarian online (jeda 400ms setelah mengetik)
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      if (searchInput.trim()) {
+        searchAccountCodes(searchInput);
+      } else {
+        setSearchResults([]);
+      }
+    }, 400);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchInput]);
+
   useEffect(() => {
     fetchData();
 
@@ -288,10 +301,7 @@ export default function BudgetShiftSimulatorPage() {
                 type="text"
                 placeholder="Ketik kata kunci... (contoh: buku, honor, listrik, internet, atk)"
                 value={searchInput}
-                onChange={(e) => {
-                  setSearchInput(e.target.value);
-                  searchAccountCodes(e.target.value);
-                }}
+                onChange={(e) => setSearchInput(e.target.value)}
                 className="w-full h-9 rounded-xl border border-zinc-200 px-3 focus:outline-none focus:border-zinc-900 font-medium"
               />
               {isSearching && (
