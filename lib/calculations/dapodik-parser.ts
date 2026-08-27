@@ -1,56 +1,110 @@
+import * as XLSX from "xlsx";
+
 export interface ParsedDapodikData {
   students: { [grade: number]: number };
   rombels: { [grade: number]: number };
 }
 
-export function parseDapodikFile(fileContent: string, fileName: string): ParsedDapodikData {
+// Mengurai berkas Excel (.xlsx / .csv) hasil unduhan portal SP Datadik / Dapodik
+export async function parseDapodikExcel(file: File): Promise<ParsedDapodikData> {
   const students: { [grade: number]: number } = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0 };
   const rombels: { [grade: number]: number } = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0 };
 
-  const isJson = fileName.toLowerCase().endsWith(".json") || fileContent.trim().startsWith("{");
-
-  if (isJson) {
-    try {
-      const parsed = JSON.parse(fileContent);
-      // Mendukung format json dapodik bersarang atau flat
-      const rows = Array.isArray(parsed) ? parsed : parsed.data || parsed.rows || [];
-      
-      rows.forEach((row: any) => {
-        const grade = Number(row.tingkat_kelas || row.class_grade || row.grade);
-        const count = Number(row.jumlah_siswa || row.student_count || row.students || 0);
-        const rombelCount = Number(row.jumlah_rombel || row.rombel_count || row.rombels || 1);
-
-        if (grade >= 1 && grade <= 9) {
-          students[grade] = count;
-          rombels[grade] = rombelCount;
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    
+    reader.onload = (e) => {
+      try {
+        const data = e.target?.result;
+        if (!data) {
+          resolve({ students, rombels });
+          return;
         }
-      });
-    } catch (e) {
-      console.error("Gagal mengurai JSON Dapodik:", e);
-    }
-  } else {
-    // Parser XML sederhana menggunakan regex/string ops untuk kompatibilitas Next.js Edge & Client
-    try {
-      const parser = new DOMParser();
-      const xmlDoc = parser.parseFromString(fileContent, "text/xml");
-      const items = xmlDoc.getElementsByTagName("rombel") || xmlDoc.getElementsByTagName("kelas");
 
-      for (let i = 0; i < items.length; i++) {
-        const item = items[i];
-        const gradeText = item.getElementsByTagName("tingkat_kelas")[0]?.textContent || item.getAttribute("grade") || "0";
-        const studentsText = item.getElementsByTagName("jumlah_siswa")[0]?.textContent || item.getAttribute("students") || "0";
-        const rombelText = item.getElementsByTagName("jumlah_rombel")[0]?.textContent || item.getAttribute("rombels") || "1";
+        const workbook = XLSX.read(data, { type: "array" });
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        
+        // Konversi sheet ke array baris 2D
+        const rows = XLSX.utils.sheet_to_json<any[]>(worksheet, { header: 1 });
 
-        const grade = Number(gradeText);
-        if (grade >= 1 && grade <= 9) {
-          students[grade] = Number(studentsText);
-          rombels[grade] = Number(rombelText);
-        }
+        // Pindai baris-baris Excel untuk mencari informasi Kelas (Tingkat) dan Jumlah Murid
+        rows.forEach((row: any) => {
+          if (!Array.isArray(row)) return;
+
+          // Cari kolom tingkat kelas (biasanya angka 1-9 atau romawi I-IX)
+          const rowStr = row.map(cell => String(cell || "").trim());
+          
+          let detectedGrade = 0;
+          let detectedStudentsCount = 0;
+          let detectedRombelsCount = 0;
+
+          rowStr.forEach((cell, idx) => {
+            const cellClean = cell.toLowerCase();
+
+            // Deteksi baris yang memuat info Kelas/Tingkat
+            if (cellClean.includes("kelas") || cellClean.includes("tingkat")) {
+              // Cari angka di dalam teks cell (misal "Kelas 1", "Tingkat 4", "Kelas VII")
+              const numMatch = cellClean.match(/\d+/);
+              if (numMatch) {
+                detectedGrade = Number(numMatch[0]);
+              } else if (cellClean.includes("vii")) {
+                detectedGrade = 7;
+              } else if (cellClean.includes("viii")) {
+                detectedGrade = 8;
+              } else if (cellClean.includes("ix")) {
+                detectedGrade = 9;
+              } else if (cellClean.includes("vi")) {
+                detectedGrade = 6;
+              } else if (cellClean.includes("iv")) {
+                detectedGrade = 4;
+              } else if (cellClean.includes("v")) {
+                detectedGrade = 5;
+              } else if (cellClean.includes("iii")) {
+                detectedGrade = 3;
+              } else if (cellClean.includes("ii")) {
+                detectedGrade = 2;
+              } else if (cellClean.includes("i")) {
+                detectedGrade = 1;
+              }
+            }
+
+            // Jika sel adalah angka tingkat 1-9 langsung
+            const directNum = Number(cell);
+            if (!isNaN(directNum) && directNum >= 1 && directNum <= 9 && detectedGrade === 0) {
+              detectedGrade = directNum;
+            }
+          });
+
+          // Jika tingkat kelas terdeteksi, cari angka jumlah siswa di baris yang sama
+          if (detectedGrade >= 1 && detectedGrade <= 9) {
+            row.forEach((cell) => {
+              const num = Number(cell);
+              // Jumlah siswa biasanya bernilai puluhan (misal 10-40 siswa per kelas)
+              if (!isNaN(num) && num > 0 && num !== detectedGrade) {
+                if (detectedStudentsCount === 0 && num > 5) {
+                  detectedStudentsCount = num;
+                } else if (detectedRombelsCount === 0 && num >= 1 && num <= 5) {
+                  detectedRombelsCount = num;
+                }
+              }
+            });
+
+            // Set ke data state hasil parse
+            if (detectedStudentsCount > 0) {
+              students[detectedGrade] = detectedStudentsCount;
+            }
+            rombels[detectedGrade] = detectedRombelsCount || 1;
+          }
+        });
+
+        resolve({ students, rombels });
+      } catch (err) {
+        reject(err);
       }
-    } catch (e) {
-      console.error("Gagal mengurai XML Dapodik:", e);
-    }
-  }
+    };
 
-  return { students, rombels };
+    reader.onerror = (err) => reject(err);
+    reader.readAsArrayBuffer(file);
+  });
 }

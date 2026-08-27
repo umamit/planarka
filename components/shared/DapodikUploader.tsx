@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { UploadCloud, CheckCircle, FileWarning } from "lucide-react";
-import { parseDapodikFile, ParsedDapodikData } from "@/lib/calculations/dapodik-parser";
+import { parseDapodikExcel, ParsedDapodikData } from "@/lib/calculations/dapodik-parser";
 
 interface DapodikUploaderProps {
   onDataParsed: (data: ParsedDapodikData) => void;
@@ -12,6 +12,7 @@ export function DapodikUploader({ onDataParsed }: DapodikUploaderProps) {
   const [dragActive, setDragActive] = useState(false);
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
   const [fileName, setFileName] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -23,28 +24,28 @@ export function DapodikUploader({ onDataParsed }: DapodikUploaderProps) {
     }
   };
 
-  const processFile = (file: File) => {
+  const processFile = async (file: File) => {
     setFileName(file.name);
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const text = e.target?.result as string;
-      if (text) {
-        const parsed = parseDapodikFile(text, file.name);
-        
-        // Validasi apakah ada data yang berhasil diekstrak
-        const hasData = Object.values(parsed.students).some((val) => val > 0);
-        if (hasData) {
-          setStatus("success");
-          onDataParsed(parsed);
-        } else {
-          setStatus("error");
-        }
+    setLoading(true);
+    setStatus("idle");
+    
+    try {
+      const parsed = await parseDapodikExcel(file);
+      
+      // Cek apakah ada data siswa yang berhasil dideteksi
+      const hasData = Object.values(parsed.students).some((val) => val > 0);
+      if (hasData) {
+        setStatus("success");
+        onDataParsed(parsed);
       } else {
         setStatus("error");
       }
-    };
-    reader.onerror = () => setStatus("error");
-    reader.readAsText(file);
+    } catch (e) {
+      console.error(e);
+      setStatus("error");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -83,33 +84,43 @@ export function DapodikUploader({ onDataParsed }: DapodikUploaderProps) {
       >
         <input
           type="file"
-          accept=".json,.xml"
+          accept=".xlsx,.xls,.csv"
           onChange={handleChange}
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+          disabled={loading}
         />
 
-        {status === "idle" && (
-          <div className="flex flex-col items-center justify-center space-y-1 text-zinc-500">
-            <UploadCloud className="h-6 w-6 text-zinc-400" />
-            <span className="font-semibold text-zinc-700">Impor Otomatis Dapodik</span>
-            <span className="text-[10px] text-zinc-400">Seret & lepas berkas ekspor .json / .xml Dapodik di sini</span>
+        {loading ? (
+          <div className="flex flex-col items-center justify-center space-y-2 text-zinc-500 py-1">
+            <div className="h-5 w-5 animate-spin rounded-full border-2 border-zinc-900 border-t-transparent" />
+            <span className="text-[10px] font-medium">Membaca file Excel Dapodik...</span>
           </div>
-        )}
+        ) : (
+          <>
+            {status === "idle" && (
+              <div className="flex flex-col items-center justify-center space-y-1 text-zinc-500">
+                <UploadCloud className="h-6 w-6 text-zinc-400" />
+                <span className="font-semibold text-zinc-700">Impor Otomatis Dapodik</span>
+                <span className="text-[10px] text-zinc-400">Seret & lepas berkas Excel (.xlsx) SP Datadik di sini</span>
+              </div>
+            )}
 
-        {status === "success" && (
-          <div className="flex flex-col items-center justify-center space-y-1 text-emerald-800">
-            <CheckCircle className="h-6 w-6 text-emerald-600 animate-bounce" />
-            <span className="font-bold">Parsing Dapodik Berhasil!</span>
-            <span className="text-[10px] text-emerald-600 font-mono truncate max-w-[250px]">{fileName}</span>
-          </div>
-        )}
+            {status === "success" && (
+              <div className="flex flex-col items-center justify-center space-y-1 text-emerald-800">
+                <CheckCircle className="h-6 w-6 text-emerald-600 animate-bounce" />
+                <span className="font-bold">Dapodik Berhasil Di-parse!</span>
+                <span className="text-[10px] text-emerald-600 font-mono truncate max-w-[250px]">{fileName}</span>
+              </div>
+            )}
 
-        {status === "error" && (
-          <div className="flex flex-col items-center justify-center space-y-1 text-rose-800">
-            <FileWarning className="h-6 w-6 text-rose-600" />
-            <span className="font-bold">Format Berkas Tidak Valid</span>
-            <span className="text-[10px] text-rose-500">Gunakan berkas ekspor JSON/XML asli dari aplikasi Dapodik</span>
-          </div>
+            {status === "error" && (
+              <div className="flex flex-col items-center justify-center space-y-1 text-rose-800">
+                <FileWarning className="h-6 w-6 text-rose-600" />
+                <span className="font-bold">Format Excel Tidak Cocok</span>
+                <span className="text-[10px] text-rose-500">Gunakan file Excel asli hasil unduhan portal SP Datadik</span>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
