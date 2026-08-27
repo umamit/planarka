@@ -127,6 +127,7 @@ export default function BudgetShiftSimulatorPage() {
             finalBudget: Number(di.final_budget),
             isHonorNonAsn: di.is_non_asn_honor,
             isMaintenanceSarpras: di.is_routine_utility,
+            isBookProcurement: di.is_book_procurement,
           }));
           setItems(mappedItems);
         }
