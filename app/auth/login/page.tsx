@@ -66,7 +66,7 @@ function LoginForm() {
           required
           value={licenseKey}
           onChange={(e) => setLicenseKey(e.target.value)}
-          placeholder="IBRA-BOS-2026-NPSN-XXXX"
+          placeholder=""
           className="w-full h-10 rounded-xl border border-zinc-200 px-3 font-mono text-xs font-semibold focus:border-zinc-900 focus:outline-none"
         />
       </div>
