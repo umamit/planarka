@@ -144,11 +144,25 @@ export default function DistrictLetterPage() {
             </CardHeader>
 
             <div className="bg-zinc-50 p-6 rounded-xl border border-zinc-150 font-mono text-[10px] text-zinc-700 space-y-4 max-w-2xl">
-              <div className="text-center font-bold border-b border-zinc-300 pb-2">
+              <div className="relative text-center font-bold border-b border-zinc-300 pb-2 px-12 min-h-[70px] flex flex-col justify-center">
+                {leftLogo && (
+                  <img
+                    src={leftLogo}
+                    alt="Logo Kiri"
+                    className="absolute left-0 top-1 w-12 h-12 object-contain"
+                  />
+                )}
+                {rightLogo && (
+                  <img
+                    src={rightLogo}
+                    alt="Logo Kanan"
+                    className="absolute right-0 top-1 w-12 h-12 object-contain"
+                  />
+                )}
                 <div>PEMERINTAH KABUPATEN PULAU TALIABU</div>
                 <div className="text-xs my-0.5">DINAS PENDIDIKAN</div>
                 <div className="text-sm font-extrabold">{profile.schoolName.toUpperCase() || "SD NEGERI BOBONG"}</div>
-                <div className="italic font-normal text-[9px] text-zinc-500 mt-1">Alamat: {profile.address || "Jln. Mansur Sou, Desa Wayo, Kec. Taliabu Barat Kode Pos 97794"} | Website: sdnegeribobong.sch.id</div>
+                <div className="italic font-normal text-[8px] text-zinc-500 mt-1">Alamat: {profile.address || "Jln. Mansur Sou, Desa Wayo, Kec. Taliabu Barat Kode Pos 97794"} | Website: sdnegeribobong.sch.id</div>
               </div>
 
               <div className="space-y-1">
