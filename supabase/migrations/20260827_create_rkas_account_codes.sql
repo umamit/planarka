@@ -26,5 +26,7 @@ VALUES
     ('5.1.02.01.01.0024', 'Belanja Alat/Bahan untuk Kegiatan Kantor - Alat Tulis Kantor (ATK)', 'SNP-6', false, false, false),
     ('5.2.02.10.02.0003', 'Belanja Modal Peralatan dan Mesin - Komputer, Laptop, Printer', 'SNP-5', false, true, false),
     ('5.1.02.01.01.0052', 'Belanja Bahan Habis Pakai Pembelajaran - Cetak dan Penggandaan Soal', 'SNP-1', false, false, false),
-    ('5.1.02.02.01.0014', 'Belanja Jasa Penyelenggaraan Acara - Transportasi dan Konsumsi Guru', 'SNP-6', false, false, false)
+    ('5.1.02.02.01.0014', 'Belanja Jasa Penyelenggaraan Acara - Transportasi dan Konsumsi Guru', 'SNP-6', false, false, false),
+    ('5.1.02.02.01.0062', 'Belanja Langganan Jasa Informasi - Hosting, Domain, Sewa Cloud Server Website Sekolah', 'SNP-7', false, true, false),
+    ('5.1.02.03.02.0088', 'Belanja Jasa Pemeliharaan Aplikasi - Pemeliharaan Jasa IT & Maintenance Website Sekolah', 'SNP-7', false, true, false)
 ON CONFLICT (account_code) DO NOTHING;
