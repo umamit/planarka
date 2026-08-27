@@ -35,7 +35,7 @@ export default function BookProcurementCalculatorPage() {
     shippingUnit
   );
 
-  const estimatedPagu = 278400000;
+  const estimatedPagu = 0;
   const bookPaguPercentage = (totalProcurementCost / estimatedPagu) * 100;
 
   return (

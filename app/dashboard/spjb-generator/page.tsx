@@ -17,9 +17,9 @@ export default function SpjbGeneratorPage() {
     headmasterNip: "19820514 200801 2 015",
     fiscalYear: 2026,
     periodPhase: "Tahap 1",
-    totalReceived: 139200000,
-    totalSpent: 115000000,
-    remainingBalance: 24200000,
+    totalReceived: 0,
+    totalSpent: 0,
+    remainingBalance: 0,
   });
   const [leftLogo, setLeftLogo] = useState<string | null>(null);
   const [rightLogo, setRightLogo] = useState<string | null>(null);

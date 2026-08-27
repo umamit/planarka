@@ -10,9 +10,9 @@ import { formatRupiah, formatNumber } from "@/lib/utils";
 import { Building, Users, Wallet, ShieldAlert } from "lucide-react";
 
 export default function DashboardOverviewPage() {
-  const [studentCount, setStudentCount] = useState<number>(240);
-  const [unitCost, setUnitCost] = useState<number>(1160000);
-  const [silpa, setSilpa] = useState<number>(15000000);
+  const [studentCount, setStudentCount] = useState<number>(0);
+  const [unitCost, setUnitCost] = useState<number>(0);
+  const [silpa, setSilpa] = useState<number>(0);
   const [bosKinerja, setBosKinerja] = useState<number>(0);
 
   const handleUpdatePagu = (students: number, cost: number, newSilpa: number, kinerja: number) => {

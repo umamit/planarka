@@ -23,8 +23,8 @@ const DEFAULT_STATE: PlanarkaDraftState = {
   headmasterNip: "19820514 200801 2 015",
   fiscalYear: 2026,
   hetZone: 5,
-  studentCount: 240,
-  silpa: 15000000,
+  studentCount: 0,
+  silpa: 0,
   shiftItems: [],
 };
 

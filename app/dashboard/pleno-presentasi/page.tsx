@@ -32,7 +32,7 @@ export default function PlenoPresentationPage() {
           <div>
             <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400">Pagu Anggaran Tahun 2026</span>
             <div className="text-3xl font-extrabold tracking-tight mt-1">
-              {hideSensitive ? "Rp 278.***.***" : formatRupiah(278400000)}
+              {hideSensitive ? "Rp ***.***.***" : formatRupiah(0)}
             </div>
           </div>
           <Badge variant="success" className="bg-emerald-950/80 text-emerald-300 border-emerald-800 text-xs px-3 py-1">

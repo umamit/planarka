@@ -7,8 +7,8 @@ import { calculatePenaltyMitigation } from "@/lib/calculations/penalty-mitigatio
 import { formatRupiah } from "@/lib/utils";
 
 export default function PenaltyMitigationPage() {
-  const [phase1Allocation, setPhase1Allocation] = useState<number>(139200000);
-  const [realized, setRealized] = useState<number>(115000000);
+  const [phase1Allocation, setPhase1Allocation] = useState<number>(0);
+  const [realized, setRealized] = useState<number>(0);
   const [reportDate, setReportDate] = useState<string>("2026-07-25");
 
   const result = calculatePenaltyMitigation({

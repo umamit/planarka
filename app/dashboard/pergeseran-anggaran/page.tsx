@@ -18,7 +18,7 @@ const INITIAL_ITEMS: ShiftItem[] = [
 
 export default function BudgetShiftSimulatorPage() {
   const [items, setItems] = useState<ShiftItem[]>(INITIAL_ITEMS);
-  const totalPagu = 278400000;
+  const totalPagu = 0;
   const validation = validateBudgetShift(items, totalPagu);
 
   const handleDeltaChange = (id: string, newDelta: number) => {
