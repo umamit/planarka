@@ -127,7 +127,8 @@ export default function SpjbGeneratorPage() {
     doc.text("Demikian pernyataan ini dibuat dengan sadar dan penuh tanggung jawab.", 14, 110);
 
     const dateToday = new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
-    doc.text(`Taliabu, ${dateToday}`, 130, 125);
+    const cityName = profile.address ? profile.address.split(",")[0].replace(/jl\.|jalan|no\.|gg\./gi, "").trim().split(" ").slice(-1)[0] : (profile.district.split(" ")[2] || "Taliabu");
+    doc.text(`${cityName}, ${dateToday}`, 130, 125);
     doc.text("Kepala Satuan Pendidikan,", 130, 130);
     doc.text("Materai", 130, 145);
     doc.text("Rp 10.000", 130, 150);

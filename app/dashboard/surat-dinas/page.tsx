@@ -69,7 +69,8 @@ export default function DistrictLetterPage() {
     doc.text("Demikian surat permohonan pengesahan ini kami sampaikan, atas perhatian dan kerja samanya kami ucapkan terima kasih.", 14, 130);
 
     const dateToday = new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
-    doc.text(`Taliabu, ${dateToday}`, 130, 155);
+    const cityName = profile.address ? profile.address.split(",")[0].replace(/jl\.|jalan|no\.|gg\./gi, "").trim().split(" ").slice(-1)[0] : (profile.district.split(" ")[2] || "Taliabu");
+    doc.text(`${cityName}, ${dateToday}`, 130, 155);
     doc.text("Kepala Satuan Pendidikan,", 130, 160);
     doc.text(profile.headmasterName || "( ................................... )", 130, 185);
     doc.text(`NIP. ${profile.headmasterNip || "-"}`, 130, 190);

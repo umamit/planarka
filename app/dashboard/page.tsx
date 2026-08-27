@@ -127,7 +127,7 @@ export default function DashboardOverviewPage() {
           <p className="text-xs text-zinc-500 mt-1">Simulasi Pagu Definitif dan Ambang Batas Regulasi Permendikbudristek No. 63/2023</p>
         </div>
         <div className="flex items-center gap-3">
-          <Badge variant="info">Zona 5 - Maluku Utara (Taliabu)</Badge>
+          <Badge variant="info">Zona {profile.hetZone} - {profile.province} ({profile.district.split(" ")[2] || "Taliabu"})</Badge>
           <PaguConfigModal
             studentCount={studentCount}
             unitCost={unitCost}

@@ -7,8 +7,9 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export async function POST(request: NextRequest) {
   try {
-    const { messages, npsn } = await request.json();
+    const { messages, npsn, fiscalYear } = await request.json();
     const groqApiKey = process.env.GROQ_API_KEY || "";
+    const activeFiscalYear = fiscalYear || 2026;
 
     if (!groqApiKey) {
       return NextResponse.json({ error: "API Key Groq belum dikonfigurasi di server." }, { status: 500 });
@@ -47,7 +48,7 @@ Jawablah dengan gaya profesional, padat, berfokus pada data, tanpa basa-basi ret
           .from("bos_allocations")
           .select("bos_regular_total, bos_performance_total, silpa_previous_year")
           .eq("tenant_id", schoolId)
-          .eq("fiscal_year", 2026)
+          .eq("fiscal_year", activeFiscalYear)
           .single();
           
         if (alloc) {
@@ -59,7 +60,7 @@ Jawablah dengan gaya profesional, padat, berfokus pada data, tanpa basa-basi ret
           .from("rkas_budget_items")
           .select("snp_code, activity_name, initial_budget, shifted_amount, final_budget")
           .eq("tenant_id", schoolId)
-          .eq("fiscal_year", 2026);
+          .eq("fiscal_year", activeFiscalYear);
 
         if (rkasItems && rkasItems.length > 0) {
           rkasSummary = rkasItems.map(
