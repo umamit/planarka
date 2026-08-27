@@ -55,10 +55,17 @@ function getNpsnFromCookie(): string | null {
     const sessionCookie = cookies.find((row) => row.startsWith("planarka_session="));
     if (!sessionCookie) return null;
 
-    const base64Value = decodeURIComponent(sessionCookie.split("=")[1]);
+    let base64Value = decodeURIComponent(sessionCookie.split("=")[1]);
+    
+    // Hapus tanda kutip pembungkus jika ada (Next.js cookie wrapper)
+    if (base64Value.startsWith('"') && base64Value.endsWith('"')) {
+      base64Value = base64Value.slice(1, -1);
+    }
+    
     const payload = JSON.parse(atob(base64Value));
     return payload.npsn || null;
-  } catch {
+  } catch (e) {
+    console.error("Gagal parse cookie:", e);
     return null;
   }
 }
