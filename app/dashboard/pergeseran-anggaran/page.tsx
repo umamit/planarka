@@ -39,6 +39,7 @@ export default function BudgetShiftSimulatorPage() {
   const [searchInput, setSearchInput] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Fungsi pencarian online ke database Supabase
   const searchAccountCodes = async (query: string) => {
@@ -126,8 +127,9 @@ export default function BudgetShiftSimulatorPage() {
 
   const handleAddItem = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newItem.accountCode || !newItem.activityName || !profile.npsn) return;
+    if (!newItem.accountCode || !newItem.activityName || !profile.npsn || isSubmitting) return;
 
+    setIsSubmitting(true);
     try {
       const { data: school } = await supabase
         .from("tenants_schools")
@@ -174,6 +176,8 @@ export default function BudgetShiftSimulatorPage() {
       }
     } catch (e) {
       console.error(e);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -402,12 +406,19 @@ export default function BudgetShiftSimulatorPage() {
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 pt-2">
-              <Button type="button" variant="outline" size="sm" onClick={() => setShowAddForm(false)}>
+             <div className="flex justify-end gap-2 pt-2">
+              <Button type="button" variant="outline" size="sm" onClick={() => setShowAddForm(false)} disabled={isSubmitting}>
                 Batal
               </Button>
-              <Button type="submit" variant="primary" size="sm">
-                Tambah Item
+              <Button type="submit" variant="primary" size="sm" disabled={isSubmitting} className="flex items-center gap-1.5">
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="h-3 w-3 animate-spin text-white" />
+                    Menyimpan...
+                  </>
+                ) : (
+                  "Tambah Item"
+                )}
               </Button>
             </div>
           </form>
