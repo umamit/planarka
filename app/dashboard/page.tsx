@@ -5,40 +5,119 @@ import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/Ca
 import { Badge } from "@/components/ui/Badge";
 import { PaguConfigModal } from "@/components/budget/PaguConfigModal";
 import { calculateBosPagu } from "@/lib/calculations/bos-pagu";
-import { saveDraftLocally, loadDraftLocally } from "@/lib/storage/draft-storage";
+import { useSchool } from "@/lib/context/SchoolContext";
 import { formatRupiah, formatNumber } from "@/lib/utils";
+import { createClient } from "@supabase/supabase-js";
 import { Building, Users, Wallet, ShieldAlert } from "lucide-react";
 
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
 export default function DashboardOverviewPage() {
+  const { profile } = useSchool();
   const [studentCount, setStudentCount] = useState<number>(0);
   const [unitCost, setUnitCost] = useState<number>(0);
   const [silpa, setSilpa] = useState<number>(0);
   const [bosKinerja, setBosKinerja] = useState<number>(0);
+  const [loading, setLoading] = useState(true);
 
+  // Ambil data pagu terdaftar di database Supabase
   useEffect(() => {
-    const draft = loadDraftLocally();
-    if (draft) {
-      setStudentCount(draft.studentCount || 0);
-      setUnitCost(draft.unitCost || 0);
-      setSilpa(draft.silpa || 0);
-      setBosKinerja(draft.bosKinerja || 0);
-    }
-  }, []);
+    async function fetchPagu() {
+      if (!profile.npsn) return;
+      setLoading(true);
 
-  const handleUpdatePagu = (students: number, cost: number, newSilpa: number, kinerja: number) => {
+      try {
+        // 1. Dapatkan tenant_id dari tabel tenants_schools
+        const { data: school, error: schoolErr } = await supabase
+          .from("tenants_schools")
+          .select("id")
+          .eq("npsn", profile.npsn)
+          .single();
+
+        if (!schoolErr && school) {
+          // 2. Dapatkan record alokasi BOS di tabel bos_allocations
+          const { data: alloc, error: allocErr } = await supabase
+            .from("bos_allocations")
+            .select("*")
+            .eq("tenant_id", school.id)
+            .eq("fiscal_year", profile.fiscalYear)
+            .single();
+
+          if (!allocErr && alloc) {
+            setStudentCount(Number(alloc.real_student_count) || 0);
+            setUnitCost(Number(alloc.unit_cost_per_student) || 0);
+            setSilpa(Number(alloc.silpa_previous_year) || 0);
+            setBosKinerja(Number(alloc.bos_performance_total) || 0);
+          }
+        }
+      } catch (e) {
+        console.error("Gagal memuat data pagu dari Supabase:", e);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchPagu();
+  }, [profile.npsn, profile.fiscalYear]);
+
+  const handleUpdatePagu = async (students: number, cost: number, newSilpa: number, kinerja: number) => {
     setStudentCount(students);
     setUnitCost(cost);
     setSilpa(newSilpa);
     setBosKinerja(kinerja);
-    saveDraftLocally({
-      studentCount: students,
-      unitCost: cost,
-      silpa: newSilpa,
-      bosKinerja: kinerja,
-    });
+
+    if (!profile.npsn) return;
+
+    try {
+      // 1. Dapatkan tenant_id dari tabel tenants_schools
+      const { data: school, error: schoolErr } = await supabase
+        .from("tenants_schools")
+        .select("id")
+        .eq("npsn", profile.npsn)
+        .single();
+
+      if (!schoolErr && school) {
+        // Hitung pembagian alokasi
+        const regularTotal = students * cost;
+        const phase1 = (regularTotal * 0.5) + newSilpa;
+        const phase2 = regularTotal * 0.5;
+
+        // 2. Simpan atau update ke tabel bos_allocations
+        const { error } = await supabase.from("bos_allocations").upsert([
+          {
+            tenant_id: school.id,
+            fiscal_year: profile.fiscalYear,
+            real_student_count: students,
+            unit_cost_per_student: cost,
+            bos_regular_total: regularTotal,
+            bos_performance_total: kinerja,
+            silpa_previous_year: newSilpa,
+            phase_1_allocation: phase1,
+            phase_2_allocation: phase2,
+          },
+        ], { onConflict: "tenant_id, fiscal_year" });
+
+        if (error) {
+          console.error("Gagal update data pagu di database:", error.message);
+        }
+      }
+    } catch (e) {
+      console.error("Gagal sinkronisasi data pagu ke Supabase:", e);
+    }
   };
 
   const pagu = calculateBosPagu(studentCount, unitCost, bosKinerja, silpa);
+
+  if (loading && profile.npsn) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 space-y-2">
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-zinc-900 border-t-transparent" />
+        <span className="text-xs text-zinc-500 font-medium">Memuat dasbor anggaran...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
