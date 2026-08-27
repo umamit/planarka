@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { PaguConfigModal } from "@/components/budget/PaguConfigModal";
 import { calculateBosPagu } from "@/lib/calculations/bos-pagu";
-import { saveDraftLocally } from "@/lib/storage/draft-storage";
+import { saveDraftLocally, loadDraftLocally } from "@/lib/storage/draft-storage";
 import { formatRupiah, formatNumber } from "@/lib/utils";
 import { Building, Users, Wallet, ShieldAlert } from "lucide-react";
 
@@ -15,6 +15,16 @@ export default function DashboardOverviewPage() {
   const [silpa, setSilpa] = useState<number>(0);
   const [bosKinerja, setBosKinerja] = useState<number>(0);
 
+  useEffect(() => {
+    const draft = loadDraftLocally();
+    if (draft) {
+      setStudentCount(draft.studentCount || 0);
+      setUnitCost(draft.unitCost || 0);
+      setSilpa(draft.silpa || 0);
+      setBosKinerja(draft.bosKinerja || 0);
+    }
+  }, []);
+
   const handleUpdatePagu = (students: number, cost: number, newSilpa: number, kinerja: number) => {
     setStudentCount(students);
     setUnitCost(cost);
@@ -22,7 +32,9 @@ export default function DashboardOverviewPage() {
     setBosKinerja(kinerja);
     saveDraftLocally({
       studentCount: students,
+      unitCost: cost,
       silpa: newSilpa,
+      bosKinerja: kinerja,
     });
   };
 

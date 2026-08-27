@@ -8,7 +8,9 @@ export interface PlanarkaDraftState {
   fiscalYear: number;
   hetZone: number;
   studentCount: number;
+  unitCost: number;
   silpa: number;
+  bosKinerja: number;
   shiftItems: any[];
 }
 
@@ -24,7 +26,9 @@ const DEFAULT_STATE: PlanarkaDraftState = {
   fiscalYear: 2026,
   hetZone: 5,
   studentCount: 0,
+  unitCost: 0,
   silpa: 0,
+  bosKinerja: 0,
   shiftItems: [],
 };
 
