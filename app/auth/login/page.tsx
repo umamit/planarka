@@ -119,7 +119,16 @@ export default function LoginPage() {
 
           <div className="border-t border-zinc-100 pt-3 text-center">
             <p className="text-[11px] text-zinc-400">
-              Belum memiliki lisensi? Hubungi IBRA Digital Engineering untuk aktivasi.
+              Belum memiliki lisensi? Hubungi{" "}
+              <a
+                href="https://ibradigital.id"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-semibold text-zinc-700 underline underline-offset-2 hover:text-zinc-900 transition-colors"
+              >
+                IBRA Digital Engineering
+              </a>{" "}
+              untuk aktivasi.
             </p>
           </div>
         </Card>
