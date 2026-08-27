@@ -22,10 +22,10 @@ interface UtilityItem {
 }
 
 const DEFAULT_UTILITIES = [
-  { name: "Langganan Listrik PLN Sekolah", monthlyCost: 850000, provider: "PT PLN (Persero)" },
-  { name: "Akses Internet Sekolah (Starlink / ISP)", monthlyCost: 1500000, provider: "Provider Internet" },
-  { name: "Air Bersih / PDAM", monthlyCost: 300000, provider: "PDAM Daerah" },
-  { name: "Langganan Aplikasi & Domain Sekolah", monthlyCost: 250000, provider: "Cloud Provider" },
+  { name: "Langganan Listrik PLN Sekolah", monthlyCost: 0, provider: "-" },
+  { name: "Akses Internet Sekolah (Starlink / ISP)", monthlyCost: 0, provider: "-" },
+  { name: "Air Bersih / PDAM", monthlyCost: 0, provider: "-" },
+  { name: "Langganan Aplikasi & Domain Sekolah", monthlyCost: 0, provider: "-" },
 ];
 
 export default function FixedUtilityBudgetPage() {
