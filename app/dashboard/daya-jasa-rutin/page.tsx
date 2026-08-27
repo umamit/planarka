@@ -93,13 +93,21 @@ export default function FixedUtilityBudgetPage() {
       if (school) {
         const annualCost = newUtility.monthlyCost * 12;
 
+        // Tentukan kode rekening BOSP dinamis
+        let accountCode = "5.1.02.02.01.0061"; // Default daya & jasa umum
+        if (newUtility.name.toLowerCase().includes("hosting") || newUtility.name.toLowerCase().includes("domain")) {
+          accountCode = "5.1.02.02.01.0062";
+        } else if (newUtility.name.toLowerCase().includes("maintenance") || newUtility.name.toLowerCase().includes("pemeliharaan")) {
+          accountCode = "5.1.02.03.02.0088";
+        }
+
         const { error } = await supabase.from("rkas_budget_items").insert([
           {
             tenant_id: school.id,
             fiscal_year: profile.fiscalYear,
             snp_code: "SNP-7",
             snp_name: "Standar Pengelolaan",
-            account_code: "5.1.02.02.01",
+            account_code: accountCode,
             account_name: newUtility.provider || "-",
             activity_name: newUtility.name,
             initial_budget: annualCost,
@@ -216,6 +224,10 @@ export default function FixedUtilityBudgetPage() {
                     setNewUtility({ name: "Penyediaan Air Bersih Sekolah", provider: "PDAM", monthlyCost: 150000 });
                   } else if (val === "sampah") {
                     setNewUtility({ name: "Pengelolaan & Pembuangan Sampah Rutin", provider: "Kelurahan / Swadaya", monthlyCost: 750000 });
+                  } else if (val === "web_hosting") {
+                    setNewUtility({ name: "Langganan Hosting & Domain Website", provider: "IBRA Digital Engineering", monthlyCost: 150000 });
+                  } else if (val === "web_maintenance") {
+                    setNewUtility({ name: "Maintenance & Pemeliharaan IT Website", provider: "IBRA Digital Engineering", monthlyCost: 500000 });
                   }
                 }}
                 className="w-full h-9 rounded-xl border border-zinc-200 bg-white px-2 focus:outline-none focus:border-zinc-900 font-semibold mb-3"
@@ -225,6 +237,8 @@ export default function FixedUtilityBudgetPage() {
                 <option value="internet">Akses Internet Wifi (Telkom)</option>
                 <option value="air">Air Bersih (PDAM)</option>
                 <option value="sampah">Kebersihan & Sampah Rutin</option>
+                <option value="web_hosting">Hosting & Domain Website (IBRA)</option>
+                <option value="web_maintenance">Maintenance Website & IT (IBRA)</option>
               </select>
             </div>
 
