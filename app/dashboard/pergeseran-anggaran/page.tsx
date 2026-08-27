@@ -9,7 +9,7 @@ import { ShiftMatrixTable } from "@/components/budget/ShiftMatrixTable";
 import { useSchool } from "@/lib/context/SchoolContext";
 import { formatRupiah } from "@/lib/utils";
 import { createClient } from "@supabase/supabase-js";
-import { RotateCcw, AlertTriangle, Save, Loader2, Plus, Trash2 } from "lucide-react";
+import { RotateCcw, AlertTriangle, Loader2, Plus } from "lucide-react";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
@@ -20,7 +20,7 @@ export default function BudgetShiftSimulatorPage() {
   const [items, setItems] = useState<ShiftItem[]>([]);
   const [totalPagu, setTotalPagu] = useState<number>(0);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [autoSaving, setAutoSaving] = useState(false);
 
   // State Form Tambah Item
   const [showAddForm, setShowAddForm] = useState(false);
@@ -152,7 +152,8 @@ export default function BudgetShiftSimulatorPage() {
     if (!error) fetchData();
   };
 
-  const handleDeltaChange = (id: string, newDelta: number) => {
+  const handleDeltaChange = async (id: string, newDelta: number) => {
+    // 1. Update status UI lokal instan agar cepat
     setItems((prev) =>
       prev.map((item) =>
         item.id === id
@@ -160,39 +161,47 @@ export default function BudgetShiftSimulatorPage() {
           : item
       )
     );
+
+    // 2. Simpan otomatis di background ke Supabase
+    setAutoSaving(true);
+    try {
+      const targetItem = items.find((it) => it.id === id);
+      if (targetItem) {
+        await supabase
+          .from("rkas_budget_items")
+          .update({
+            shifted_amount: newDelta,
+            final_budget: targetItem.initialBudget + newDelta,
+          })
+          .eq("id", id);
+      }
+    } catch (e) {
+      console.error("Gagal auto-save delta:", e);
+    } finally {
+      setAutoSaving(false);
+    }
   };
 
-  const handleSaveToDatabase = async () => {
-    setSaving(true);
+  const handleReset = async () => {
+    if (!confirm("Reset semua pergeseran anggaran kembali ke 0?")) return;
+    setLoading(true);
     try {
       const promises = items.map((item) =>
         supabase
           .from("rkas_budget_items")
           .update({
-            shifted_amount: item.shiftDelta,
-            final_budget: item.finalBudget,
+            shifted_amount: 0,
+            final_budget: item.initialBudget,
           })
           .eq("id", item.id)
       );
-
       await Promise.all(promises);
-      alert("Pergeseran anggaran berhasil disimpan permanen ke database cloud!");
+      await fetchData();
     } catch (e) {
       console.error(e);
-      alert("Gagal menyimpan ke database.");
     } finally {
-      setSaving(false);
+      setLoading(false);
     }
-  };
-
-  const handleReset = () => {
-    setItems((prev) =>
-      prev.map((it) => ({
-        ...it,
-        shiftDelta: 0,
-        finalBudget: it.initialBudget,
-      }))
-    );
   };
 
   const validation = validateBudgetShift(items, totalPagu);
@@ -214,39 +223,37 @@ export default function BudgetShiftSimulatorPage() {
           <p className="text-xs text-zinc-500 mt-1">Uji Keseimbangan (Zero-Balance), Batas 50% Honor, dan Anti-Defisit Sebelum Pengesahan Dinas</p>
         </div>
         <div className="flex items-center gap-2">
+          {autoSaving && (
+            <span className="text-[11px] text-zinc-400 font-medium mr-2 flex items-center gap-1">
+              <Loader2 className="h-3 w-3 animate-spin text-zinc-500" />
+              Menyimpan otomatis ke cloud...
+            </span>
+          )}
           <Button variant="outline" size="sm" onClick={() => setShowAddForm(!showAddForm)}>
             <Plus className="h-3.5 w-3.5 mr-1" /> Tambah Kegiatan
           </Button>
-          <Button variant="outline" size="sm" onClick={handleReset} disabled={saving}>
-            <RotateCcw className="h-3.5 w-3.5 mr-1" /> Reset
-          </Button>
-          <Button variant="primary" size="sm" onClick={handleSaveToDatabase} disabled={saving}>
-            {saving ? (
-              <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
-            ) : (
-              <Save className="h-3.5 w-3.5 mr-1" />
-            )}
-            Simpan ke Cloud
+          <Button variant="outline" size="sm" onClick={handleReset}>
+            <RotateCcw className="h-3.5 w-3.5 mr-1" /> Reset Pergeseran
           </Button>
         </div>
       </div>
 
       {showAddForm && (
-        <Card className="space-y-4 max-w-xl">
-          <CardHeader className="p-0">
+        <Card className="max-w-2xl">
+          <CardHeader className="p-0 mb-4">
             <CardTitle className="text-sm">Tambah Rencana Kegiatan Anggaran Sekolah (RKAS)</CardTitle>
           </CardHeader>
           <form onSubmit={handleAddItem} className="space-y-3 text-xs">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="font-semibold text-zinc-700 block mb-1">Kode Akun Rekening</label>
                 <input
                   type="text"
-                  required
+                  placeholder="Contoh: 5.2.05.01.01.0001"
                   value={newItem.accountCode}
                   onChange={(e) => setNewItem({ ...newItem, accountCode: e.target.value })}
-                  placeholder="Contoh: 5.2.05.01.01.0001"
-                  className="w-full h-9 rounded-xl border border-zinc-200 px-3 font-semibold focus:outline-none focus:border-zinc-900"
+                  className="w-full h-9 rounded-xl border border-zinc-200 px-3 focus:outline-none focus:border-zinc-900"
+                  required
                 />
               </div>
               <div>
@@ -256,9 +263,14 @@ export default function BudgetShiftSimulatorPage() {
                   onChange={(e) => setNewItem({ ...newItem, snpCode: e.target.value })}
                   className="w-full h-9 rounded-xl border border-zinc-200 bg-white px-2 focus:outline-none focus:border-zinc-900"
                 >
-                  {["SNP-1", "SNP-2", "SNP-3", "SNP-4", "SNP-5", "SNP-6", "SNP-7", "SNP-8"].map((code) => (
-                    <option key={code} value={code}>{code}</option>
-                  ))}
+                  <option value="SNP-1">SNP-1 (Standar Kompetensi Lulusan)</option>
+                  <option value="SNP-2">SNP-2 (Standar Isi)</option>
+                  <option value="SNP-3">SNP-3 (Standar Proses)</option>
+                  <option value="SNP-4">SNP-4 (Standar Pendidik & Tendik)</option>
+                  <option value="SNP-5">SNP-5 (Standar Sarana & Prasarana)</option>
+                  <option value="SNP-6">SNP-6 (Standar Pengelolaan)</option>
+                  <option value="SNP-7">SNP-7 (Standar Pembiayaan)</option>
+                  <option value="SNP-8">SNP-8 (Standar Penilaian Pendidikan)</option>
                 </select>
               </div>
             </div>
@@ -267,54 +279,54 @@ export default function BudgetShiftSimulatorPage() {
               <label className="font-semibold text-zinc-700 block mb-1">Nama Rencana Kegiatan (Uraian)</label>
               <input
                 type="text"
-                required
+                placeholder="Contoh: Pengadaan Buku Teks Utama Kelas 1 Merdeka"
                 value={newItem.activityName}
                 onChange={(e) => setNewItem({ ...newItem, activityName: e.target.value })}
-                placeholder="Contoh: Pengadaan Buku Teks Utama Kelas 1 Merdeka"
-                className="w-full h-9 rounded-xl border border-zinc-200 px-3 font-semibold focus:outline-none focus:border-zinc-900"
+                className="w-full h-9 rounded-xl border border-zinc-200 px-3 focus:outline-none focus:border-zinc-900"
+                required
               />
             </div>
 
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
                 <label className="font-semibold text-zinc-700 block mb-1">Anggaran Awal (Rp)</label>
                 <input
                   type="number"
-                  required
                   value={newItem.initialBudget}
                   onChange={(e) => setNewItem({ ...newItem, initialBudget: Number(e.target.value) })}
-                  className="w-full h-9 rounded-xl border border-zinc-200 px-3 font-semibold focus:outline-none focus:border-zinc-900"
+                  className="w-full h-9 rounded-xl border border-zinc-200 px-3 focus:outline-none focus:border-zinc-900"
+                  min="0"
                 />
               </div>
               <div>
                 <label className="font-semibold text-zinc-700 block mb-1">Kategori Honor Guru?</label>
                 <select
-                  value={String(newItem.isHonorNonAsn)}
-                  onChange={(e) => setNewItem({ ...newItem, isHonorNonAsn: e.target.value === "true" })}
+                  value={newItem.isHonorNonAsn ? "Honor" : "Bukan"}
+                  onChange={(e) => setNewItem({ ...newItem, isHonorNonAsn: e.target.value === "Honor" })}
                   className="w-full h-9 rounded-xl border border-zinc-200 bg-white px-2 focus:outline-none focus:border-zinc-900"
                 >
-                  <option value="false">Bukan</option>
-                  <option value="true">Ya (Honor Guru)</option>
+                  <option value="Bukan">Bukan Belanja Honor</option>
+                  <option value="Honor">Belanja Honor Guru Non-ASN (Pasal 40)</option>
                 </select>
               </div>
               <div>
                 <label className="font-semibold text-zinc-700 block mb-1">Kategori Sarpras?</label>
                 <select
-                  value={String(newItem.isMaintenanceSarpras)}
-                  onChange={(e) => setNewItem({ ...newItem, isMaintenanceSarpras: e.target.value === "true" })}
+                  value={newItem.isMaintenanceSarpras ? "Sarpras" : "Bukan"}
+                  onChange={(e) => setNewItem({ ...newItem, isMaintenanceSarpras: e.target.value === "Sarpras" })}
                   className="w-full h-9 rounded-xl border border-zinc-200 bg-white px-2 focus:outline-none focus:border-zinc-900"
                 >
-                  <option value="false">Bukan</option>
-                  <option value="true">Ya (Pemeliharaan)</option>
+                  <option value="Bukan">Bukan Pemeliharaan</option>
+                  <option value="Sarpras">Daya / Pemeliharaan Sarpras Sekolah</option>
                 </select>
               </div>
             </div>
 
             <div className="flex justify-end gap-2 pt-2">
-              <Button type="button" variant="ghost" size="sm" onClick={() => setShowAddForm(false)}>
+              <Button type="button" variant="outline" size="sm" onClick={() => setShowAddForm(false)}>
                 Batal
               </Button>
-              <Button type="submit" size="sm">
+              <Button type="submit" variant="primary" size="sm">
                 Tambah Item
               </Button>
             </div>
@@ -322,70 +334,74 @@ export default function BudgetShiftSimulatorPage() {
         </Card>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card className="space-y-1">
           <div className="flex items-center justify-between">
-            <CardDescription>Status Keseimbangan</CardDescription>
+            <span className="text-xs text-zinc-500 font-semibold">Status Keseimbangan</span>
             <Badge variant={validation.isBalanced ? "success" : "danger"}>
-              {validation.isBalanced ? "Balance" : "Tidak Seimbang"}
+              {validation.isBalanced ? "Balance" : "Selisih"}
             </Badge>
           </div>
-          <CardTitle className="text-xl font-bold mt-1">{formatRupiah(validation.netDelta)}</CardTitle>
-          <p className="text-[11px] text-zinc-500 mt-1">Selisih Bersih Mutasi</p>
+          <div className="text-xl font-bold tracking-tight text-zinc-950">
+            {formatRupiah(validation.netDelta)}
+          </div>
+          <p className="text-[10px] text-zinc-400">Selisih Bersih Mutasi</p>
         </Card>
 
-        <Card>
+        <Card className="space-y-1">
           <div className="flex items-center justify-between">
-            <CardDescription>Pagu Anggaran Sekolah</CardDescription>
+            <span className="text-xs text-zinc-500 font-semibold">Pagu Anggaran Sekolah</span>
             <Badge variant="default">Definitif</Badge>
           </div>
-          <CardTitle className="text-xl font-bold mt-1">{formatRupiah(totalPagu)}</CardTitle>
-          <p className="text-[11px] text-zinc-500 mt-1">Total Pagu Tersedia</p>
+          <div className="text-xl font-bold tracking-tight text-zinc-950">
+            {formatRupiah(totalPagu)}
+          </div>
+          <p className="text-[10px] text-zinc-400">Total Pagu Tersedia</p>
         </Card>
 
-        <Card>
+        <Card className="space-y-1">
           <div className="flex items-center justify-between">
-            <CardDescription>Status Pelanggaran Batas</CardDescription>
-            <Badge variant={validation.warnings.length === 0 ? "success" : "danger"}>
-              {validation.warnings.length === 0 ? "Aman" : "Ada Pelanggaran"}
+            <span className="text-xs text-zinc-500 font-semibold">Status Pelanggaran Batas</span>
+            <Badge variant={validation.isHonorValid ? "success" : "danger"}>
+              {validation.isHonorValid ? "Aman" : "Melanggar"}
             </Badge>
           </div>
-          <CardTitle className="text-sm font-bold mt-2">
-            {validation.warnings.length === 0 ? (
-              <span className="text-emerald-700">Lolos Verifikasi Juknis BOSP</span>
-            ) : (
-              <span className="text-rose-700">{validation.warnings.length} Temuan Kesalahan</span>
-            )}
-          </CardTitle>
+          <div className={`text-sm font-bold mt-1 ${validation.isHonorValid ? "text-emerald-700" : "text-rose-600"}`}>
+            {!validation.isHonorValid 
+              ? `Rasio Honor Guru ${validation.honorPercentage.toFixed(1)}% (Melebihi Batas 50%)`
+              : "Lolos Verifikasi Juknis BOSP"
+            }
+          </div>
+          <p className="text-[10px] text-zinc-400">Pencegah Temuan BPK</p>
         </Card>
       </div>
 
-      {validation.warnings.length > 0 && (
-        <Card className="border-rose-200 bg-rose-50/50 p-4 space-y-2">
-          <div className="flex items-center gap-2 text-rose-800 font-semibold text-xs">
-            <AlertTriangle className="h-4.5 w-4.5" />
-            <span>Verifikasi Gagal: Kesalahan Aturan Penganggaran Terdeteksi</span>
-          </div>
-          <ul className="list-disc pl-5 text-xs text-rose-700 space-y-1">
-            {validation.warnings.map((err: string, idx: number) => (
-              <li key={idx}>{err}</li>
-            ))}
-          </ul>
-        </Card>
-      )}
-
       {items.length === 0 ? (
-        <Card className="py-12 text-center text-xs text-zinc-400">
+        <Card className="p-12 text-center text-xs text-zinc-400">
           Belum ada kegiatan anggaran yang didaftarkan. Gunakan tombol &quot;Tambah Kegiatan&quot; di atas untuk mulai.
         </Card>
       ) : (
-        <Card className="p-0 overflow-hidden">
-          <ShiftMatrixTable items={items} onDeltaChange={handleDeltaChange} onDelete={handleDeleteItem} />
-          
-          <div className="p-4 bg-zinc-50 border-t border-zinc-100 flex justify-end text-xs">
-            <span className="text-zinc-500">Seluruh data disinkronisasi langsung ke Supabase Cloud.</span>
-          </div>
-        </Card>
+        <div className="space-y-2">
+          {validation.warnings.length > 0 && (
+            <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 space-y-1">
+              <div className="font-semibold flex items-center gap-1.5">
+                <AlertTriangle className="h-4 w-4 text-amber-600" />
+                Catatan Evaluasi Kepatuhan Juknis:
+              </div>
+              <ul className="list-disc pl-5 space-y-0.5">
+                {validation.warnings.map((w, idx) => (
+                  <li key={idx}>{w}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <ShiftMatrixTable
+            items={items}
+            onDeltaChange={handleDeltaChange}
+            onDelete={handleDeleteItem}
+          />
+        </div>
       )}
     </div>
   );
