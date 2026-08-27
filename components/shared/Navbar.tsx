@@ -34,7 +34,7 @@ export function Navbar() {
         <div className="flex items-center gap-4">
           <div className="hidden sm:flex items-center gap-1.5 text-xs text-zinc-600 font-medium">
             <ShieldCheck className="h-4 w-4 text-emerald-600" />
-            <span>Permendikbudristek 63/2023 Compliant</span>
+            <span>Permendikdasmen 8/2026 Compliant</span>
           </div>
           <button
             onClick={handleLogout}
