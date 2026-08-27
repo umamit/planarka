@@ -236,7 +236,32 @@ export default function FixedUtilityBudgetPage() {
           </CardHeader>
           <form onSubmit={handleAddUtility} className="space-y-3 text-xs">
             <div>
-              <label className="font-semibold text-zinc-700 block mb-1">Nama Layanan (Komponen)</label>
+              <label className="font-semibold text-zinc-700 block mb-1">Pilihan Cepat Layanan (Template)</label>
+              <select
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === "listrik") {
+                    setNewUtility({ name: "Langganan Daya Listrik PLN", provider: "PT PLN (Persero)", monthlyCost: 350000 });
+                  } else if (val === "internet") {
+                    setNewUtility({ name: "Langganan Jasa Internet Wifi Sekolah", provider: "PT Telkom / Indihome", monthlyCost: 450000 });
+                  } else if (val === "air") {
+                    setNewUtility({ name: "Penyediaan Air Bersih Sekolah", provider: "PDAM", monthlyCost: 150000 });
+                  } else if (val === "sampah") {
+                    setNewUtility({ name: "Pengelolaan & Pembuangan Sampah Rutin", provider: "Kelurahan / Swadaya", monthlyCost: 750000 });
+                  }
+                }}
+                className="w-full h-9 rounded-xl border border-zinc-200 bg-white px-2 focus:outline-none focus:border-zinc-900 font-semibold mb-3"
+              >
+                <option value="">Pilih dari Template Layanan BOSP...</option>
+                <option value="listrik">Daya Listrik PLN</option>
+                <option value="internet">Akses Internet Wifi (Telkom)</option>
+                <option value="air">Air Bersih (PDAM)</option>
+                <option value="sampah">Kebersihan & Sampah Rutin</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="font-semibold text-zinc-700 block mb-1">Nama Layanan Rutin</label>
               <input
                 type="text"
                 required

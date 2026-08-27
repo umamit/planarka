@@ -232,14 +232,16 @@ export default function HonorValidationPage() {
                 />
               </div>
               <div>
-                <label className="font-semibold text-zinc-700 block mb-1">Jumlah Bulan</label>
-                <input
-                  type="number"
-                  required
+                <label className="font-semibold text-zinc-700 block mb-1">Jumlah Bulan Aktif</label>
+                <select
                   value={newTeacher.monthsCount}
                   onChange={(e) => setNewTeacher({ ...newTeacher, monthsCount: Number(e.target.value) })}
-                  className="w-full h-9 rounded-xl border border-zinc-200 px-3 font-semibold focus:outline-none focus:border-zinc-900"
-                />
+                  className="w-full h-9 rounded-xl border border-zinc-200 bg-white px-2 focus:outline-none focus:border-zinc-900 font-semibold"
+                >
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((m) => (
+                    <option key={m} value={m}>{m} Bulan</option>
+                  ))}
+                </select>
               </div>
             </div>
 
