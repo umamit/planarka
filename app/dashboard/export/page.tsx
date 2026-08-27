@@ -7,8 +7,6 @@ import { FileText, FileSpreadsheet, Loader2 } from "lucide-react";
 import { useSchool } from "@/lib/context/SchoolContext";
 import { createClient } from "@supabase/supabase-js";
 import { formatRupiah } from "@/lib/utils";
-import jsPDF from "jspdf";
-import "jspdf-autotable";
 import * as XLSX from "xlsx";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
@@ -93,44 +91,54 @@ export default function ExportDocumentsPage() {
     setIsExcelLoading(false);
   };
 
-  const handleExportPdf = () => {
+  const handleExportPdf = async () => {
     setIsPdfLoading(true);
-    const doc = new jsPDF();
-    doc.setFontSize(13);
-    doc.text("BERITA ACARA RAPAT PLENO PERGESERAN ANGGARAN BOS", 14, 20);
-    doc.setFontSize(9.5);
-    doc.text(`Tahun Anggaran ${profile.fiscalYear} - Sekolah: ${profile.schoolName} (NPSN: ${profile.npsn})`, 14, 27);
-    doc.text(`Berdasarkan Permendikdasmen No. 8/2026 - ${profile.district || "Wilayah Kab. Pulau Taliabu"}`, 14, 33);
+    try {
+      // Import dinamis untuk menghindari server-side render crash pada library browser
+      const { default: jsPDF } = await import("jspdf");
+      await import("jspdf-autotable");
 
-    const tableRows = items.map((it) => [
-      it.code,
-      it.name,
-      formatRupiah(it.initial),
-      (it.delta >= 0 ? "+" : "") + formatRupiah(it.delta),
-      formatRupiah(it.final)
-    ]);
+      const doc = new jsPDF();
+      doc.setFontSize(13);
+      doc.text("BERITA ACARA RAPAT PLENO PERGESERAN ANGGARAN BOS", 14, 20);
+      doc.setFontSize(9.5);
+      doc.text(`Tahun Anggaran ${profile.fiscalYear} - Sekolah: ${profile.schoolName} (NPSN: ${profile.npsn})`, 14, 27);
+      doc.text(`Berdasarkan Permendikdasmen No. 8/2026 - ${profile.district || "Wilayah Kab. Pulau Taliabu"}`, 14, 33);
 
-    (doc as any).autoTable({
-      startY: 40,
-      head: [["Kode Rekening", "Kegiatan Belanja", "Awal (Rp)", "Pergeseran (Rp)", "Akhir (Rp)"]],
-      body: tableRows.length > 0 ? tableRows : [["-", "Tidak ada data anggaran.", "Rp0", "Rp0", "Rp0"]],
-    });
+      const tableRows = items.map((it) => [
+        it.code,
+        it.name,
+        formatRupiah(it.initial),
+        (it.delta >= 0 ? "+" : "") + formatRupiah(it.delta),
+        formatRupiah(it.final)
+      ]);
 
-    const finalY = (doc as any).lastAutoTable.finalY + 20;
-    
-    doc.text("Mengetahui,", 14, finalY);
-    doc.text("Kepala Satuan Pendidikan,", 14, finalY + 8);
-    doc.text("Ketua Komite Sekolah,", 80, finalY + 8);
-    doc.text("Bendahara BOS,", 150, finalY + 8);
+      (doc as any).autoTable({
+        startY: 40,
+        head: [["Kode Rekening", "Kegiatan Belanja", "Awal (Rp)", "Pergeseran (Rp)", "Akhir (Rp)"]],
+        body: tableRows.length > 0 ? tableRows : [["-", "Tidak ada data anggaran.", "Rp0", "Rp0", "Rp0"]],
+      });
 
-    doc.text(profile.headmasterName || "( ................................... )", 14, finalY + 30);
-    doc.text(`NIP. ${profile.headmasterNip || "-"}`, 14, finalY + 35);
+      const finalY = (doc as any).lastAutoTable.finalY + 20;
+      
+      doc.text("Mengetahui,", 14, finalY);
+      doc.text("Kepala Satuan Pendidikan,", 14, finalY + 8);
+      doc.text("Ketua Komite Sekolah,", 80, finalY + 8);
+      doc.text("Bendahara BOS,", 150, finalY + 8);
 
-    doc.text("( ................................... )", 80, finalY + 30);
-    doc.text("( ................................... )", 150, finalY + 30);
+      doc.text(profile.headmasterName || "( ................................... )", 14, finalY + 30);
+      doc.text(`NIP. ${profile.headmasterNip || "-"}`, 14, finalY + 35);
 
-    doc.save(`Berita_Acara_Pergeseran_${profile.schoolName}.pdf`);
-    setIsPdfLoading(false);
+      doc.text("( ................................... )", 80, finalY + 30);
+      doc.text("( ................................... )", 150, finalY + 30);
+
+      doc.save(`Berita_Acara_Pergeseran_${profile.schoolName}.pdf`);
+    } catch (error: any) {
+      console.error("Gagal mencetak PDF Berita Acara:", error);
+      alert("Terjadi kesalahan saat memproses dokumen PDF: " + error.message);
+    } finally {
+      setIsPdfLoading(false);
+    }
   };
 
   if (loading) {
