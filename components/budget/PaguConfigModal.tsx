@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { SlidersHorizontal, CheckCircle2 } from "lucide-react";
@@ -26,6 +26,14 @@ export function PaguConfigModal({
   const [cost, setCost] = useState(initialCost);
   const [silpa, setSilpa] = useState(initialSilpa);
   const [kinerja, setKinerja] = useState(initialKinerja);
+
+  // Sinkronkan state lokal ketika data props berubah (data Supabase berhasil dimuat)
+  useEffect(() => {
+    setStudents(initialStudents);
+    setCost(initialCost);
+    setSilpa(initialSilpa);
+    setKinerja(initialKinerja);
+  }, [initialStudents, initialCost, initialSilpa, initialKinerja]);
 
   const handleSave = () => {
     onSave(students, cost, silpa, kinerja);
