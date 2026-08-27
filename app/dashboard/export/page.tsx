@@ -132,7 +132,7 @@ export default function ExportDocumentsPage() {
     setIsExporting(false);
   };
 
-  if (loading && profile.npsn) {
+  if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-20 space-y-2">
         <div className="h-6 w-6 animate-spin rounded-full border-2 border-zinc-900 border-t-transparent" />
