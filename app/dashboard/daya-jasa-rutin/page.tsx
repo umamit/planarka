@@ -1,10 +1,17 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
+import { useSchool } from "@/lib/context/SchoolContext";
 import { formatRupiah } from "@/lib/utils";
-import { Zap, Lock } from "lucide-react";
+import { createClient } from "@supabase/supabase-js";
+import { Zap, Lock, Edit3, Check, Loader2 } from "lucide-react";
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 interface UtilityItem {
   id: string;
@@ -14,17 +21,140 @@ interface UtilityItem {
   provider: string;
 }
 
-const INITIAL_UTILITIES: UtilityItem[] = [
-  { id: "u-1", name: "Langganan Listrik PLN Sekolah", monthlyCost: 850000, monthsCount: 12, provider: "PT PLN (Persero)" },
-  { id: "u-2", name: "Akses Internet Sekolah (Starlink / ISP)", monthlyCost: 1500000, monthsCount: 12, provider: "Provider Internet" },
-  { id: "u-3", name: "Air Bersih / PDAM", monthlyCost: 300000, monthsCount: 12, provider: "PDAM Daerah" },
-  { id: "u-4", name: "Langganan Aplikasi & Domain Sekolah", monthlyCost: 250000, monthsCount: 12, provider: "Cloud Provider" },
+const DEFAULT_UTILITIES = [
+  { name: "Langganan Listrik PLN Sekolah", monthlyCost: 850000, provider: "PT PLN (Persero)" },
+  { name: "Akses Internet Sekolah (Starlink / ISP)", monthlyCost: 1500000, provider: "Provider Internet" },
+  { name: "Air Bersih / PDAM", monthlyCost: 300000, provider: "PDAM Daerah" },
+  { name: "Langganan Aplikasi & Domain Sekolah", monthlyCost: 250000, provider: "Cloud Provider" },
 ];
 
 export default function FixedUtilityBudgetPage() {
-  const [utilities] = useState<UtilityItem[]>(INITIAL_UTILITIES);
+  const { profile } = useSchool();
+  const [utilities, setUtilities] = useState<UtilityItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [savingId, setSavingId] = useState<string | null>(null);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [editValues, setEditValues] = useState({ monthlyCost: 0, provider: "" });
+
+  useEffect(() => {
+    fetchUtilities();
+  }, [profile.npsn, profile.fiscalYear]);
+
+  const fetchUtilities = async () => {
+    if (!profile.npsn) return;
+    setLoading(true);
+
+    try {
+      const { data: school } = await supabase
+        .from("tenants_schools")
+        .select("id")
+        .eq("npsn", profile.npsn)
+        .single();
+
+      if (school) {
+        // Ambil data anggaran rutin dari rkas_budget_items
+        const { data: dbItems } = await supabase
+          .from("rkas_budget_items")
+          .select("*")
+          .eq("tenant_id", school.id)
+          .eq("fiscal_year", profile.fiscalYear)
+          .eq("is_routine_utility", true);
+
+        if (dbItems && dbItems.length > 0) {
+          setUtilities(dbItems.map((di: any) => ({
+            id: di.id,
+            name: di.activity_name,
+            monthlyCost: Math.round(Number(di.initial_budget) / 12),
+            monthsCount: 12,
+            provider: di.account_name || "Layanan Rutin", // Kita pinjam kolom account_name untuk nama provider
+          })));
+        } else {
+          // Jika belum ada, daftarkan 4 daya & jasa default ke DB
+          const inserts = DEFAULT_UTILITIES.map((du) => ({
+            tenant_id: school.id,
+            fiscal_year: profile.fiscalYear,
+            snp_code: "SNP-7",
+            snp_name: "Standar Pengelolaan",
+            account_code: "5.1.02.02.01",
+            account_name: du.provider,
+            activity_name: du.name,
+            initial_budget: du.monthlyCost * 12,
+            shifted_amount: 0,
+            final_budget: du.monthlyCost * 12,
+            is_routine_utility: true,
+          }));
+
+          const { data: newItems } = await supabase
+            .from("rkas_budget_items")
+            .insert(inserts)
+            .select();
+
+          if (newItems) {
+            setUtilities(newItems.map((di: any) => ({
+              id: di.id,
+              name: di.activity_name,
+              monthlyCost: Math.round(Number(di.initial_budget) / 12),
+              monthsCount: 12,
+              provider: di.account_name,
+            })));
+          }
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const startEdit = (item: UtilityItem) => {
+    setEditId(item.id);
+    setEditValues({ monthlyCost: item.monthlyCost, provider: item.provider });
+  };
+
+  const handleSave = async (id: string) => {
+    setSavingId(id);
+    try {
+      const annualBudget = editValues.monthlyCost * 12;
+
+      const { error } = await supabase
+        .from("rkas_budget_items")
+        .update({
+          initial_budget: annualBudget,
+          final_budget: annualBudget,
+          account_name: editValues.provider,
+        })
+        .eq("id", id);
+
+      if (!error) {
+        setUtilities((prev) =>
+          prev.map((u) =>
+            u.id === id
+              ? { ...u, monthlyCost: editValues.monthlyCost, provider: editValues.provider }
+              : u
+          )
+        );
+        setEditId(null);
+      } else {
+        alert("Gagal memperbarui anggaran rutin.");
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setSavingId(null);
+    }
+  };
 
   const totalAnnualCost = utilities.reduce((acc, u) => acc + u.monthlyCost * u.monthsCount, 0);
+
+  if (loading && profile.npsn) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 space-y-2">
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-zinc-900 border-t-transparent" />
+        <span className="text-xs text-zinc-500 font-medium">Memuat anggaran daya & jasa...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -33,7 +163,7 @@ export default function FixedUtilityBudgetPage() {
           <h1 className="text-2xl font-bold tracking-tight text-zinc-900">Alokasi Anggaran Daya & Jasa Terkunci (12 Bulan)</h1>
           <p className="text-xs text-zinc-500 mt-1">Penguncian Biaya Operasional Rutin Sekolah Agar Tidak Terpotong Pergeseran Insidental</p>
         </div>
-        <Badge variant="default">
+        <Badge variant="default" className="w-fit">
           <Lock className="h-3 w-3 inline mr-1" />
           Budget Lock Aktif
         </Badge>
@@ -59,19 +189,71 @@ export default function FixedUtilityBudgetPage() {
               <th className="p-3 font-semibold">Penyedia / Rekanan</th>
               <th className="p-3 font-semibold">Biaya Bulanan</th>
               <th className="p-3 font-semibold">Durasi</th>
-              <th className="p-3 font-semibold text-right">Alokasi 12 Bulan (Terkunci)</th>
+              <th className="p-3 font-semibold">Alokasi 12 Bulan (Terkunci)</th>
+              <th className="p-3 font-semibold text-right">Aksi</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-200/80">
-            {utilities.map((u) => (
-              <tr key={u.id} className="hover:bg-zinc-50/50">
-                <td className="p-3 font-medium text-zinc-900">{u.name}</td>
-                <td className="p-3 text-zinc-500">{u.provider}</td>
-                <td className="p-3">{formatRupiah(u.monthlyCost)}</td>
-                <td className="p-3">{u.monthsCount} Bulan</td>
-                <td className="p-3 font-bold text-zinc-900 text-right">{formatRupiah(u.monthlyCost * u.monthsCount)}</td>
-              </tr>
-            ))}
+            {utilities.map((item) => {
+              const isEditing = editId === item.id;
+              return (
+                <tr key={item.id} className="hover:bg-zinc-50/50">
+                  <td className="p-3 font-semibold text-zinc-900">{item.name}</td>
+                  <td className="p-3 text-zinc-600">
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        value={editValues.provider}
+                        onChange={(e) => setEditValues({ ...editValues, provider: e.target.value })}
+                        className="w-full h-8 rounded-lg border border-zinc-200 px-2 focus:outline-none focus:border-zinc-900 font-medium"
+                      />
+                    ) : (
+                      item.provider
+                    )}
+                  </td>
+                  <td className="p-3 text-zinc-800">
+                    {isEditing ? (
+                      <input
+                        type="number"
+                        value={editValues.monthlyCost}
+                        onChange={(e) => setEditValues({ ...editValues, monthlyCost: Number(e.target.value) })}
+                        className="w-28 h-8 rounded-lg border border-zinc-200 px-2 focus:outline-none focus:border-zinc-900 font-mono font-bold"
+                      />
+                    ) : (
+                      formatRupiah(item.monthlyCost)
+                    )}
+                  </td>
+                  <td className="p-3 text-zinc-500 font-medium">{item.monthsCount} Bulan</td>
+                  <td className="p-3 font-bold text-zinc-950">
+                    {formatRupiah(item.monthlyCost * item.monthsCount)}
+                  </td>
+                  <td className="p-3 text-right">
+                    {isEditing ? (
+                      <button
+                        onClick={() => handleSave(item.id)}
+                        disabled={savingId === item.id}
+                        className="text-emerald-700 hover:bg-emerald-50 p-1.5 rounded-lg transition-colors inline-flex mr-1"
+                        title="Simpan"
+                      >
+                        {savingId === item.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Check className="h-4 w-4" />
+                        )}
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => startEdit(item)}
+                        className="text-zinc-600 hover:bg-zinc-100 p-1.5 rounded-lg transition-colors inline-flex"
+                        title="Edit Biaya"
+                      >
+                        <Edit3 className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </Card>
