@@ -1,0 +1,64 @@
+import React from "react";
+import { ShiftItem } from "@/lib/calculations/budget-shift";
+import { Badge } from "@/components/ui/Badge";
+import { Card } from "@/components/ui/Card";
+import { formatRupiah } from "@/lib/utils";
+
+interface ShiftMatrixTableProps {
+  items: ShiftItem[];
+  onDeltaChange: (id: string, newDelta: number) => void;
+}
+
+export function ShiftMatrixTable({ items, onDeltaChange }: ShiftMatrixTableProps) {
+  return (
+    <Card className="p-0 overflow-hidden">
+      <table className="w-full text-left text-xs border-collapse">
+        <thead>
+          <tr className="bg-zinc-50/80 border-b border-zinc-200 text-zinc-700">
+            <th className="p-3 font-semibold">SNP & Kode Akun</th>
+            <th className="p-3 font-semibold">Nama Kegiatan / Pos Belanja</th>
+            <th className="p-3 font-semibold">Anggaran Awal</th>
+            <th className="p-3 font-semibold">Nilai Pergeseran (+/-)</th>
+            <th className="p-3 font-semibold">Anggaran Akhir</th>
+            <th className="p-3 font-semibold text-right">Status</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-zinc-200/80">
+          {items.map((item) => {
+            const isDeficit = item.finalBudget < 0;
+            return (
+              <tr key={item.id} className="hover:bg-zinc-50/50">
+                <td className="p-3 font-mono text-[11px]">
+                  <span className="font-semibold text-zinc-900">{item.snpCode}</span>
+                  <span className="block text-zinc-400">{item.accountCode}</span>
+                </td>
+                <td className="p-3 font-medium text-zinc-900">{item.activityName}</td>
+                <td className="p-3">{formatRupiah(item.initialBudget)}</td>
+                <td className="p-3">
+                  <input
+                    type="number"
+                    value={item.shiftDelta}
+                    onChange={(e) => onDeltaChange(item.id, Number(e.target.value))}
+                    className="w-32 rounded-lg border border-zinc-200 bg-white px-2 py-1 text-xs font-semibold focus:border-zinc-900 focus:outline-none"
+                  />
+                </td>
+                <td className={`p-3 font-bold ${isDeficit ? "text-rose-600" : "text-zinc-900"}`}>
+                  {formatRupiah(item.finalBudget)}
+                </td>
+                <td className="p-3 text-right">
+                  {isDeficit ? (
+                    <Badge variant="danger">Defisit</Badge>
+                  ) : item.shiftDelta !== 0 ? (
+                    <Badge variant="warning">Bergeser</Badge>
+                  ) : (
+                    <Badge variant="default">Tetap</Badge>
+                  )}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </Card>
+  );
+}
