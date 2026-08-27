@@ -8,6 +8,12 @@ const SESSION_COOKIE = "planarka_session";
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Opsi A: Arahkan akses beranda "/" langsung ke "/dashboard"
+  if (pathname === "/") {
+    return NextResponse.redirect(new URL("/dashboard", request.url));
+  }
+
+  // Lindungi rute /dashboard/*
   if (!pathname.startsWith(PROTECTED_PREFIX)) {
     return NextResponse.next();
   }
@@ -24,5 +30,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*"],
+  matcher: ["/", "/dashboard/:path*"],
 };
