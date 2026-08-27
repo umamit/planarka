@@ -41,6 +41,7 @@ export default function LicenseManagementPage() {
     const { data, error } = await supabase
       .from("tenants_schools")
       .select("*")
+      .neq("npsn", "00000000")
       .order("created_at", { ascending: false });
 
     if (!error && data) {
