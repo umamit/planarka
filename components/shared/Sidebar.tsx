@@ -51,7 +51,7 @@ export function Sidebar() {
         { href: "/dashboard/validasi-honor", label: "Validasi Honor Guru", icon: UserCheck },
         { href: "/dashboard/daya-jasa-rutin", label: "Daya & Jasa Terkunci", icon: Zap },
         { href: "/dashboard/rpd-bulanan", label: "RPD Bulanan", icon: CalendarDays },
-        { href: "/dashboard/pbd-rapor", label: "PBD Rapor Pendidikan", icon: TrendingUp },
+        // { href: "/dashboard/pbd-rapor", label: "PBD Rapor Pendidikan", icon: TrendingUp }, // Diaktifkan jika Dinas mensyaratkan PBD
         { href: "/dashboard/bku-kas", label: "Rekonsiliasi Kas BKU", icon: Landmark },
         { href: "/dashboard/mitigasi-penalti", label: "Mitigasi Penalti PMK", icon: AlertTriangle },
         { href: "/dashboard/kalkulator-pajak", label: "Kalkulator Pajak", icon: Receipt },
