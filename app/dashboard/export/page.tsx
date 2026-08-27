@@ -3,12 +3,10 @@
 import React, { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
-import { FileText, FileSpreadsheet, FileCode, Loader2 } from "lucide-react";
+import { FileText, FileSpreadsheet, Loader2 } from "lucide-react";
 import { useSchool } from "@/lib/context/SchoolContext";
 import { createClient } from "@supabase/supabase-js";
 import { formatRupiah } from "@/lib/utils";
-import { generateArkasXml } from "@/lib/calculations/arkas-xml-generator";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 import * as XLSX from "xlsx";
@@ -134,39 +132,6 @@ export default function ExportDocumentsPage() {
     setIsExporting(false);
   };
 
-  const handleExportXml = () => {
-    setIsExporting(true);
-    
-    // Siapkan item untuk generator
-    const generatorItems = items.map(it => ({
-      snpCode: it.snpCode,
-      accountCode: it.code,
-      activityName: it.name,
-      initialBudget: it.initial,
-      shiftDelta: it.delta,
-      finalBudget: it.final
-    }));
-
-    const xmlContent = generateArkasXml(
-      profile.schoolName || "Sekolah Klien",
-      profile.npsn || "00000000",
-      profile.fiscalYear || 2026,
-      generatorItems
-    );
-
-    // Bikin file blob untuk didownload browser
-    const blob = new Blob([xmlContent], { type: "text/xml;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `ARKAS_SHIFT_${profile.npsn || "60200589"}_2026.xml`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    setIsExporting(false);
-  };
-
   if (loading && profile.npsn) {
     return (
       <div className="flex flex-col items-center justify-center py-20 space-y-2">
@@ -180,10 +145,10 @@ export default function ExportDocumentsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-zinc-900">Pusat Ekspor Dokumen Resmi & Berita Acara</h1>
-        <p className="text-xs text-zinc-500 mt-1">Unduh Lembar Kerja Rapat Pleno format PDF, Excel, dan XML ARKAS Siap Cetak untuk Kepala Sekolah, Bendahara & Komite</p>
+        <p className="text-xs text-zinc-500 mt-1">Unduh Lembar Kerja Rapat Pleno format PDF & Excel Siap Cetak untuk Kepala Sekolah, Bendahara & Komite</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card className="flex flex-col justify-between">
           <div>
             <div className="flex items-center gap-3">
@@ -234,33 +199,6 @@ export default function ExportDocumentsPage() {
             >
               {isExporting ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <FileSpreadsheet className="h-4 w-4 mr-1" />}
               Ekspor Lembar Kerja Excel
-            </Button>
-          </div>
-        </Card>
-
-        <Card className="flex flex-col justify-between">
-          <div>
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-100 text-zinc-700 border border-zinc-200">
-                <FileCode className="h-5 w-5" />
-              </div>
-              <div>
-                <CardTitle className="text-base">Ekstrak XML ARKAS Desktop</CardTitle>
-                <CardDescription>Format XML resmi kompatibel impor database ARKAS Kemendikbud</CardDescription>
-              </div>
-            </div>
-            <div className="mt-4 text-xs text-zinc-600 leading-relaxed">
-              Ekspor data secara instan untuk diimpor langsung ke aplikasi desktop ARKAS milik Kemendikbudristek tanpa perlu mengetik ulang entri pergeseran secara manual.
-            </div>
-          </div>
-          <div className="pt-6 border-t border-zinc-100 flex justify-end mt-4">
-            <Button
-              variant="outline"
-              onClick={handleExportXml}
-              disabled={isExporting}
-            >
-              {isExporting ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <FileCode className="h-4 w-4 mr-1" />}
-              Ekstrak XML ARKAS
             </Button>
           </div>
         </Card>
