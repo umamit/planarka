@@ -146,7 +146,7 @@ export default function FixedUtilityBudgetPage() {
           setNewUtility({ name: "", monthlyCost: 0, provider: "" });
           fetchUtilities();
         } else {
-          alert("Gagal menambahkan komponen daya & jasa.");
+          alert("Gagal menambahkan komponen daya & jasa: " + error.message);
         }
       }
     } catch (e) {

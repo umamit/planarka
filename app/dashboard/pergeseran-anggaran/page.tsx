@@ -197,7 +197,7 @@ export default function BudgetShiftSimulatorPage() {
           });
           fetchData();
         } else {
-          alert("Gagal menambahkan item anggaran.");
+          alert("Gagal menambahkan item anggaran: " + error.message);
         }
       }
     } catch (e) {

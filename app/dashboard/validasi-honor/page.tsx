@@ -110,7 +110,7 @@ export default function HonorValidationPage() {
           });
           fetchTeachers();
         } else {
-          alert("Gagal menambahkan guru.");
+          alert("Gagal menambahkan guru: " + error.message);
         }
       }
     } catch (e) {
