@@ -1,7 +1,7 @@
 export interface TaxCalculationResult {
   grossAmount: number;
   taxBase: number;
-  ppnAmount: number; // 11%
+  ppnAmount: number; // 12% PPN UU HPP 2025/2026
   pph21Amount: number; // 5% NPWP / 6% non-NPWP
   pph22Amount: number; // 1.5% Belanja Barang
   pph23Amount: number; // 2% Jasa / Sewa
@@ -19,11 +19,11 @@ export function calculateTax(
 
   // Buku Pelajaran & Kitab Suci Bebas PPN (PPN 0%)
   if (type === "barang" && grossAmount >= 2000000) {
-    ppnAmount = (grossAmount * 11) / 111;
+    ppnAmount = (grossAmount * 12) / 112;
     const taxBase = grossAmount - ppnAmount;
     pph22Amount = taxBase * 0.015;
   } else if (type === "jasa" && grossAmount >= 2000000) {
-    ppnAmount = (grossAmount * 11) / 111;
+    ppnAmount = (grossAmount * 12) / 112;
     const taxBase = grossAmount - ppnAmount;
     pph23Amount = taxBase * 0.02;
   } else if (type === "honor_npwp") {
