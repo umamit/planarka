@@ -1,9 +1,19 @@
+"use client";
+
 import React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ShieldCheck } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ShieldCheck, LogOut } from "lucide-react";
 
 export function Navbar() {
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    await fetch("/api/auth/logout", { method: "POST" });
+    router.push("/auth/login");
+  };
+
   return (
     <header className="sticky top-0 z-50 w-full border-b border-zinc-200/80 bg-white/80 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
@@ -26,12 +36,13 @@ export function Navbar() {
             <ShieldCheck className="h-4 w-4 text-emerald-600" />
             <span>Permendikbudristek 63/2023 Compliant</span>
           </div>
-          <Link
-            href="/dashboard"
-            className="inline-flex h-9 items-center justify-center rounded-xl bg-zinc-900 px-4 text-xs font-medium text-white hover:bg-zinc-800 shadow-sm transition-all"
+          <button
+            onClick={handleLogout}
+            className="inline-flex items-center gap-2 h-9 rounded-xl border border-zinc-200 px-4 text-xs font-medium text-zinc-600 hover:bg-zinc-100 transition-all"
           >
-            Buka Simulator
-          </Link>
+            <LogOut className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Keluar</span>
+          </button>
         </div>
       </div>
     </header>
