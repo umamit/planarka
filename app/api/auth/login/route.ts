@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "NPSN dan Kunci Lisensi wajib diisi." }, { status: 400 });
     }
 
-    const isValid = verifyLicenseKey(npsn.trim(), licenseKey.trim());
+    const isValid = await verifyLicenseKey(npsn.trim(), licenseKey.trim());
 
     if (!isValid) {
       return NextResponse.json(
