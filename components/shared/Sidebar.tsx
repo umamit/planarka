@@ -52,6 +52,7 @@ export function Sidebar() {
         { href: "/dashboard/validasi-honor", label: "Validasi Honor Guru", icon: UserCheck },
         { href: "/dashboard/daya-jasa-rutin", label: "Daya & Jasa Terkunci", icon: Zap },
         { href: "/dashboard/rpd-bulanan", label: "RPD Bulanan", icon: CalendarDays },
+        { href: "/dashboard/kalender-kegiatan", label: "Kalender Kegiatan", icon: CalendarRange },
         { href: "/dashboard/realisasi-anggaran", label: "Realisasi Anggaran", icon: TrendingDown },
         { href: "/dashboard/checklist-dokumen", label: "Checklist Dokumen", icon: ClipboardList },
         // { href: "/dashboard/pbd-rapor", label: "PBD Rapor Pendidikan", icon: TrendingUp }, // Diaktifkan jika Dinas mensyaratkan PBD
