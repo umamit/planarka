@@ -21,7 +21,9 @@ import {
   FileSpreadsheet,
   Settings,
   CalendarDays,
-  ClipboardList
+  ClipboardList,
+  CalendarRange,
+  TrendingDown
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
