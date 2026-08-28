@@ -49,7 +49,7 @@ export function RpdTable({ items, onCellChange }: Props) {
                       value={val}
                       min={0}
                       onChange={(e) => onCellChange(idx, m, Number(e.target.value))}
-                      className="w-full h-7 rounded-md border border-zinc-200 px-1 text-right font-mono text-[10px] focus:outline-none focus:border-zinc-800 bg-white"
+                      className="w-full h-7 rounded-md border border-zinc-200 px-1 text-right font-mono text-[10px] focus:outline-none focus:border-zinc-800 bg-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />
                   </td>
                 ))}
