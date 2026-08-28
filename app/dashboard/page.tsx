@@ -20,6 +20,8 @@ export default function DashboardOverviewPage() {
   const [unitCost, setUnitCost] = useState<number>(0);
   const [silpa, setSilpa] = useState<number>(0);
   const [bosKinerja, setBosKinerja] = useState<number>(0);
+  const [rkasTotal, setRkasTotal] = useState<number>(0);
+  const [totalRealized, setTotalRealized] = useState<number>(0);
   const [loading, setLoading] = useState(true);
 
   // Ambil data pagu terdaftar di database Supabase
@@ -50,6 +52,21 @@ export default function DashboardOverviewPage() {
             setUnitCost(Number(alloc.unit_cost_per_student) || 0);
             setSilpa(Number(alloc.silpa_previous_year) || 0);
             setBosKinerja(Number(alloc.bos_performance_total) || 0);
+          }
+
+          // 3. Dapatkan RKAS dan Realisasi
+          const [{ data: budgetItems }, { data: realizations }] = await Promise.all([
+            supabase.from("rkas_budget_items").select("final_budget").eq("tenant_id", school.id).eq("fiscal_year", profile.fiscalYear),
+            supabase.from("rkas_realizations").select("realized_amount").eq("tenant_id", school.id).eq("fiscal_year", profile.fiscalYear)
+          ]);
+
+          if (budgetItems) {
+            const rkasSum = budgetItems.reduce((acc, cur) => acc + Number(cur.final_budget), 0);
+            setRkasTotal(rkasSum);
+          }
+          if (realizations) {
+            const realSum = realizations.reduce((acc, cur) => acc + Number(cur.realized_amount), 0);
+            setTotalRealized(realSum);
           }
         }
       } catch (e) {
@@ -153,23 +170,27 @@ export default function DashboardOverviewPage() {
         <Card>
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
-              <CardDescription>Penyaluran Tahap 1 (50%)</CardDescription>
+              <CardDescription>Pagu Terpakai di RKAS</CardDescription>
               <Building className="h-4 w-4 text-zinc-600" />
             </div>
-            <CardTitle className="text-xl font-bold">{formatRupiah(pagu.phase1Allocation)}</CardTitle>
+            <CardTitle className="text-xl font-bold">{formatRupiah(rkasTotal)}</CardTitle>
           </CardHeader>
-          <div className="text-[11px] text-zinc-500">Reguler 50% + SiLPA Masuk</div>
+          <div className="text-[11px] text-zinc-500">
+            Progress RKAS: {pagu.totalPagu > 0 ? ((rkasTotal / pagu.totalPagu) * 100).toFixed(0) : 0}% disusun
+          </div>
         </Card>
 
         <Card>
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
-              <CardDescription>Penyaluran Tahap 2 (50%)</CardDescription>
+              <CardDescription>Realisasi Belanja Riil</CardDescription>
               <Building className="h-4 w-4 text-zinc-600" />
             </div>
-            <CardTitle className="text-xl font-bold">{formatRupiah(pagu.phase2Allocation)}</CardTitle>
+            <CardTitle className="text-xl font-bold text-emerald-700">{formatRupiah(totalRealized)}</CardTitle>
           </CardHeader>
-          <div className="text-[11px] text-zinc-500">Target Pelaporan 31 Juli</div>
+          <div className="text-[11px] text-zinc-500">
+            Progress Serapan: {rkasTotal > 0 ? ((totalRealized / rkasTotal) * 100).toFixed(0) : 0}% terpakai
+          </div>
         </Card>
 
         <Card>
@@ -183,6 +204,40 @@ export default function DashboardOverviewPage() {
           <div className="text-[11px] text-zinc-500">Tarif: {formatRupiah(pagu.unitCostPerStudent)} / Siswa</div>
         </Card>
       </div>
+
+      {/* Progress Bars Visual Card */}
+      <Card className="p-4 space-y-4">
+        <CardTitle className="text-sm font-bold text-zinc-800">Visualisasi Penggunaan Dana BOSP</CardTitle>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-1.5">
+            <div className="flex justify-between text-xs font-bold text-zinc-700">
+              <span>RKAS disusun vs Pagu</span>
+              <span>{pagu.totalPagu > 0 ? ((rkasTotal / pagu.totalPagu) * 100).toFixed(1) : 0}%</span>
+            </div>
+            <div className="w-full h-2.5 bg-zinc-100 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-zinc-800 rounded-full transition-all duration-300" 
+                style={{ width: `${pagu.totalPagu > 0 ? Math.min((rkasTotal / pagu.totalPagu) * 100, 100) : 0}%` }}
+              />
+            </div>
+            <div className="text-[10px] text-zinc-400">Target penyusunan: Rp {formatNumber(pagu.totalPagu)}</div>
+          </div>
+
+          <div className="space-y-1.5">
+            <div className="flex justify-between text-xs font-bold text-zinc-700">
+              <span>Dana Terpakai (Realisasi) vs RKAS</span>
+              <span>{rkasTotal > 0 ? ((totalRealized / rkasTotal) * 100).toFixed(1) : 0}%</span>
+            </div>
+            <div className="w-full h-2.5 bg-zinc-100 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-emerald-500 rounded-full transition-all duration-300" 
+                style={{ width: `${rkasTotal > 0 ? Math.min((totalRealized / rkasTotal) * 100, 100) : 0}%` }}
+              />
+            </div>
+            <div className="text-[10px] text-zinc-400">Total rencana belanja disusun: Rp {formatNumber(rkasTotal)}</div>
+          </div>
+        </div>
+      </Card>
 
       <Card>
         <CardHeader>
