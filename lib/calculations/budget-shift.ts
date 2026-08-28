@@ -9,6 +9,9 @@ export interface ShiftItem {
   snpCode: string;
   accountCode: string;
   activityName: string;
+  volume?: number;
+  unit?: string;
+  unitPrice?: number;
   initialBudget: number;
   shiftDelta: number; // Positif (tambah) atau Negatif (kurang)
   finalBudget: number;

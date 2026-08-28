@@ -35,7 +35,14 @@ export function ShiftMatrixTable({ items, onDeltaChange, onDelete }: ShiftMatrix
                   <span className="font-semibold text-zinc-900">{item.snpCode}</span>
                   <span className="block text-zinc-400">{item.accountCode}</span>
                 </td>
-                <td className="p-3 font-medium text-zinc-900">{item.activityName}</td>
+                <td className="p-3">
+                  <div className="font-semibold text-zinc-900">{item.activityName}</div>
+                  {item.volume !== undefined && item.unitPrice !== undefined && item.unitPrice > 0 && (
+                    <div className="text-[10px] text-zinc-400 font-medium mt-0.5">
+                      Rincian: {item.volume} {item.unit || "Paket"} x {formatRupiah(item.unitPrice)}
+                    </div>
+                  )}
+                </td>
                 <td className="p-3">{formatRupiah(item.initialBudget)}</td>
                 <td className="p-3">
                   <input
