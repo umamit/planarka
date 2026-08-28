@@ -31,6 +31,9 @@ export default function BudgetShiftSimulatorPage() {
     snpCode: "SNP-1",
     accountCode: "",
     activityName: "",
+    volume: 1,
+    unit: "Paket",
+    unitPrice: 0,
     initialBudget: 0,
     isHonorNonAsn: false,
     isMaintenanceSarpras: false,
@@ -153,6 +156,7 @@ export default function BudgetShiftSimulatorPage() {
         .single();
 
       if (school) {
+        const computedBudget = newItem.volume * newItem.unitPrice;
         const { error } = await supabase.from("rkas_budget_items").insert([
           {
             tenant_id: school.id,
@@ -162,9 +166,12 @@ export default function BudgetShiftSimulatorPage() {
             account_code: newItem.accountCode,
             account_name: newItem.activityName,
             activity_name: newItem.activityName,
-            initial_budget: newItem.initialBudget,
+            volume: newItem.volume,
+            unit: newItem.unit,
+            unit_price: newItem.unitPrice,
+            initial_budget: computedBudget,
             shifted_amount: 0,
-            final_budget: newItem.initialBudget,
+            final_budget: computedBudget,
             is_non_asn_honor: newItem.isHonorNonAsn,
             is_routine_utility: newItem.isMaintenanceSarpras,
             is_book_procurement: newItem.isBookProcurement || false,
@@ -172,19 +179,22 @@ export default function BudgetShiftSimulatorPage() {
         ]);
 
         if (!error) {
-          setShowAddForm(false);
-          setNewItem({
-            snpCode: "SNP-1",
-            accountCode: "",
-            activityName: "",
-            initialBudget: 0,
-            isHonorNonAsn: false,
-            isMaintenanceSarpras: false,
-            isBookProcurement: false,
-          });
-          setSearchInput("");
-          setSearchResults([]);
-          fetchData();
+           setShowAddForm(false);
+           setNewItem({
+             snpCode: "SNP-1",
+             accountCode: "",
+             activityName: "",
+             volume: 1,
+             unit: "Paket",
+             unitPrice: 0,
+             initialBudget: 0,
+             isHonorNonAsn: false,
+             isMaintenanceSarpras: false,
+             isBookProcurement: false,
+           });
+           setSearchInput("");
+           setSearchResults([]);
+           fetchData();
         } else {
           alert("Gagal menambahkan item anggaran: " + error.message);
         }
@@ -383,17 +393,49 @@ export default function BudgetShiftSimulatorPage() {
               />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+             <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
               <div>
-                <label className="font-semibold text-zinc-700 block mb-1">Anggaran Awal (Rp)</label>
+                <label className="font-semibold text-zinc-700 block mb-1">Volume</label>
                 <input
                   type="number"
-                  value={newItem.initialBudget}
-                  onChange={(e) => setNewItem({ ...newItem, initialBudget: Number(e.target.value) })}
-                  className="w-full h-9 rounded-xl border border-zinc-200 px-3 focus:outline-none focus:border-zinc-900 font-bold"
-                  min="0"
+                  value={newItem.volume}
+                  onChange={(e) => setNewItem({ ...newItem, volume: Number(e.target.value) })}
+                  className="w-full h-9 rounded-xl border border-zinc-200 px-3 focus:outline-none focus:border-zinc-900 font-semibold"
+                  min="1"
+                  required
                 />
               </div>
+              <div>
+                <label className="font-semibold text-zinc-700 block mb-1">Satuan</label>
+                <input
+                  type="text"
+                  placeholder="Rim, Bulan, Pcs"
+                  value={newItem.unit}
+                  onChange={(e) => setNewItem({ ...newItem, unit: e.target.value })}
+                  className="w-full h-9 rounded-xl border border-zinc-200 px-3 focus:outline-none focus:border-zinc-900 font-semibold"
+                  required
+                />
+              </div>
+              <div>
+                <label className="font-semibold text-zinc-700 block mb-1">Harga Satuan (Rp)</label>
+                <input
+                  type="number"
+                  value={newItem.unitPrice}
+                  onChange={(e) => setNewItem({ ...newItem, unitPrice: Number(e.target.value) })}
+                  className="w-full h-9 rounded-xl border border-zinc-200 px-3 focus:outline-none focus:border-zinc-900 font-semibold"
+                  min="0"
+                  required
+                />
+              </div>
+              <div>
+                <label className="font-semibold text-zinc-700 block mb-1">Total (Auto)</label>
+                <div className="w-full h-9 flex items-center px-3 rounded-xl border border-zinc-100 bg-zinc-50 font-bold text-zinc-800">
+                  {formatRupiah(newItem.volume * newItem.unitPrice)}
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="font-semibold text-zinc-700 block mb-1">Kategori Honor Guru?</label>
                 <select

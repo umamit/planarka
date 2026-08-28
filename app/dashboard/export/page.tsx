@@ -16,6 +16,9 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey);
 interface RkasItem {
   code: string;
   name: string;
+  volume: number;
+  unit: string;
+  unitPrice: number;
   initial: number;
   delta: number;
   final: number;
@@ -55,6 +58,9 @@ export default function ExportDocumentsPage() {
           setItems(dbItems.map((di: any) => ({
             code: di.account_code,
             name: di.activity_name,
+            volume: Number(di.volume) || 1,
+            unit: di.unit || "Paket",
+            unitPrice: Number(di.unit_price) || 0,
             initial: Number(di.initial_budget) || 0,
             delta: Number(di.shifted_amount) || 0,
             final: Number(di.final_budget) || 0,
@@ -73,12 +79,15 @@ export default function ExportDocumentsPage() {
     setIsExcelLoading(true);
 
     const dataHeader = [
-      ["KODE REKENING", "NAMA KEGIATAN", "ANGGARAN AWAL", "PERGESERAN (+/-)", "ANGGARAN AKHIR"]
+      ["KODE REKENING", "NAMA KEGIATAN / URAIAN", "VOLUME", "SATUAN", "HARGA SATUAN", "TOTAL ANGGARAN AWAL", "PERGESERAN (+/-)", "ANGGARAN AKHIR"]
     ];
 
     const dataRows = items.map((it) => [
       it.code,
       it.name,
+      it.volume,
+      it.unit,
+      it.unitPrice,
       it.initial,
       it.delta,
       it.final
