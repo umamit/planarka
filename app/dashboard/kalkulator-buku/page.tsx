@@ -472,8 +472,8 @@ export default function BookProcurementPage() {
                       className="w-full h-8 px-2 rounded border border-zinc-200 focus:outline-none"
                     />
                     <div className="flex gap-2">
-                      <Button variant="primary" size="xs" onClick={handleAddCustomBook}>Simpan Buku</Button>
-                      <Button variant="ghost" size="xs" onClick={() => setShowAddForm(false)}>Batal</Button>
+                      <Button variant="primary" size="sm" onClick={handleAddCustomBook}>Simpan Buku</Button>
+                      <Button variant="ghost" size="sm" onClick={() => setShowAddForm(false)}>Batal</Button>
                     </div>
                   </td>
                   <td className="p-3 text-center">
