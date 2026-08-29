@@ -174,7 +174,145 @@ export default function BookProcurementPage() {
       qty,
       price,
       subtotal,
+      isCustom: false
     };
+  });
+
+  // State untuk buku custom tambahan (Buku Guru, dll)
+  const [customRows, setCustomRows] = useState<Array<{
+    id: string;
+    subjectTitle: string;
+    classGrade: number;
+    price: number;
+    qty: number;
+  }>>([]);
+
+  const [newTitle, setNewTitle] = useState("");
+  const [newGrade, setNewGrade] = useState(1);
+  const [newPrice, setNewPrice] = useState<number>(150000);
+  const [newQty, setNewQty] = useState<number>(1);
+  const [showAddForm, setShowAddForm] = useState(false);
+
+  // Ambil data custom yang tersimpan di awal
+  useEffect(() => {
+    fetchCustomBooks();
+  }, [profile.npsn, profile.fiscalYear]);
+
+  const fetchCustomBooks = async () => {
+    if (!profile.npsn) return;
+    try {
+      const { data: school } = await supabase
+        .from("tenants_schools")
+        .select("id")
+        .eq("npsn", profile.npsn)
+        .single();
+
+      if (school) {
+        const { data: savedCustoms } = await supabase
+          .from("bos_book_custom_entries")
+          .select("*")
+          .eq("tenant_id", school.id)
+          .eq("fiscal_year", profile.fiscalYear);
+
+        if (savedCustoms) {
+          setCustomRows(savedCustoms.map(c => ({
+            id: c.id,
+            subjectTitle: c.subject_title,
+            classGrade: c.class_grade,
+            price: c.price,
+            qty: c.quantity
+          })));
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleAddCustomBook = async () => {
+    if (!newTitle.trim()) return;
+    const newId = `custom-${Date.now()}`;
+    const newRow = {
+      id: newId,
+      subjectTitle: newTitle,
+      classGrade: newGrade,
+      price: newPrice,
+      qty: newQty
+    };
+
+    const nextCustoms = [...customRows, newRow];
+    setCustomRows(nextCustoms);
+    setNewTitle("");
+    setShowAddForm(false);
+
+    if (!profile.npsn) return;
+    setAutoSaving(true);
+    try {
+      const { data: school } = await supabase
+        .from("tenants_schools")
+        .select("id")
+        .eq("npsn", profile.npsn)
+        .single();
+
+      if (school) {
+        await supabase.from("bos_book_custom_entries").insert({
+          id: newId,
+          tenant_id: school.id,
+          fiscal_year: profile.fiscalYear,
+          subject_title: newRow.subjectTitle,
+          class_grade: newRow.classGrade,
+          price: newRow.price,
+          quantity: newRow.qty
+        });
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setAutoSaving(false);
+    }
+  };
+
+  const handleUpdateCustomQty = async (id: string, qty: number) => {
+    const nextCustoms = customRows.map(r => r.id === id ? { ...r, qty } : r);
+    setCustomRows(nextCustoms);
+
+    if (!profile.npsn) return;
+    setAutoSaving(true);
+    try {
+      await supabase
+        .from("bos_book_custom_entries")
+        .update({ quantity: qty })
+        .eq("id", id);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setAutoSaving(false);
+    }
+  };
+
+  const handleDeleteCustom = async (id: string) => {
+    const nextCustoms = customRows.filter(r => r.id !== id);
+    setCustomRows(nextCustoms);
+
+    if (!profile.npsn) return;
+    setAutoSaving(true);
+    try {
+      await supabase
+        .from("bos_book_custom_entries")
+        .delete()
+        .eq("id", id);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setAutoSaving(false);
+    }
+  };
+
+  // Tambahkan baris custom ke kalkulasi total
+  customRows.forEach((r) => {
+    const subtotal = r.qty * r.price;
+    totalBelanjaBuku += subtotal;
+    totalExemplars += r.qty;
   });
 
   const target10Persen = totalPagu * 0.1;
@@ -292,6 +430,92 @@ export default function BookProcurementPage() {
                   </td>
                 </tr>
               ))}
+
+              {/* Buku Custom Tambahan */}
+              {customRows.map((row, index) => (
+                <tr key={row.id} className="hover:bg-zinc-50/50 bg-amber-50/20">
+                  <td className="p-3 text-center text-zinc-400 font-mono">{tableRows.length + index + 1}</td>
+                  <td className="p-3">
+                    <div className="font-semibold text-amber-900">{row.subjectTitle}</div>
+                    <div className="text-[10px] text-amber-600 mt-0.5 flex items-center gap-1.5">
+                      <span>Buku Tambahan</span>
+                      <button onClick={() => handleDeleteCustom(row.id)} className="text-rose-600 hover:underline">Hapus</button>
+                    </div>
+                  </td>
+                  <td className="p-3 text-center text-zinc-600">Kelas {row.classGrade}</td>
+                  <td className="p-3 text-right font-mono text-zinc-700">{formatRupiah(row.price)}</td>
+                  <td className="p-3 text-center">
+                    <input
+                      type="number"
+                      min="0"
+                      value={row.qty || ""}
+                      onChange={(e) => handleUpdateCustomQty(row.id, Number(e.target.value))}
+                      className="w-16 h-8 text-center rounded-md border border-zinc-200 font-mono text-xs focus:outline-none focus:ring-1 focus:ring-zinc-900"
+                    />
+                  </td>
+                  <td className="p-3 text-right font-bold text-zinc-900 font-mono">
+                    {formatRupiah(row.qty * row.price)}
+                  </td>
+                </tr>
+              ))}
+
+              {/* Form Input Tambah Buku Baru */}
+              {showAddForm ? (
+                <tr className="bg-zinc-50 border-t border-zinc-200">
+                  <td className="p-3 text-center text-zinc-400 font-mono">*</td>
+                  <td className="p-3 space-y-2">
+                    <input
+                      type="text"
+                      placeholder="Masukkan Judul Buku Guru / Judul Lainnya..."
+                      value={newTitle}
+                      onChange={(e) => setNewTitle(e.target.value)}
+                      className="w-full h-8 px-2 rounded border border-zinc-200 focus:outline-none"
+                    />
+                    <div className="flex gap-2">
+                      <Button variant="primary" size="xs" onClick={handleAddCustomBook}>Simpan Buku</Button>
+                      <Button variant="ghost" size="xs" onClick={() => setShowAddForm(false)}>Batal</Button>
+                    </div>
+                  </td>
+                  <td className="p-3 text-center">
+                    <select
+                      value={newGrade}
+                      onChange={(e) => setNewGrade(Number(e.target.value))}
+                      className="h-8 rounded border border-zinc-200 bg-white"
+                    >
+                      {[1, 2, 3, 4, 5, 6].map(g => <option key={g} value={g}>Kelas {g}</option>)}
+                    </select>
+                  </td>
+                  <td className="p-3 text-right">
+                    <input
+                      type="number"
+                      value={newPrice}
+                      onChange={(e) => setNewPrice(Number(e.target.value))}
+                      className="w-24 h-8 text-right px-2 rounded border border-zinc-200 font-mono"
+                    />
+                  </td>
+                  <td className="p-3 text-center">
+                    <input
+                      type="number"
+                      value={newQty}
+                      onChange={(e) => setNewQty(Number(e.target.value))}
+                      className="w-12 h-8 text-center rounded border border-zinc-200 font-mono"
+                    />
+                  </td>
+                  <td className="p-3 text-right font-mono text-zinc-400">-</td>
+                </tr>
+              ) : (
+                <tr>
+                  <td colSpan={6} className="p-3">
+                    <button
+                      onClick={() => setShowAddForm(true)}
+                      className="text-xs font-semibold text-zinc-700 hover:text-zinc-950 flex items-center gap-1"
+                    >
+                      + Tambah Buku Guru / Buku Custom Baru
+                    </button>
+                  </td>
+                </tr>
+              )}
+
               <tr className="bg-zinc-50/80 font-bold border-t-2 border-zinc-300">
                 <td colSpan={4} className="p-3 text-right text-zinc-700 text-xs">TOTAL BELANJA BUKU:</td>
                 <td className="p-3 text-center font-mono text-zinc-900 text-xs">{totalExemplars} eks</td>
