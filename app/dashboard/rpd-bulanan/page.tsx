@@ -126,11 +126,22 @@ export default function RpdBulananPage() {
           <Button variant="outline" size="sm" onClick={handleAutoDistribute}>
             <RefreshCw className="h-3.5 w-3.5 mr-1" /> Distribusi Merata
           </Button>
-          <Button size="sm" onClick={handleSave} disabled={saving}>
-            {saving
-              ? <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />Menyimpan...</>
-              : <><Save className="h-3.5 w-3.5 mr-1" />Simpan RPD</>
-            }
+          <Button 
+            size="sm" 
+            onClick={handleSave} 
+            disabled={saving}
+            className="relative overflow-hidden bg-zinc-900 text-white hover:bg-zinc-800 transition-all duration-300 shadow-md group"
+          >
+            {saving ? (
+              <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />Menyimpan...</>
+            ) : (
+              <>
+                {/* Shimmer light effect overlay */}
+                <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_ease-in-out_infinite]" />
+                <Save className="h-3.5 w-3.5 mr-1 relative z-10" />
+                <span className="relative z-10">Simpan RPD</span>
+              </>
+            )}
           </Button>
         </div>
       </div>

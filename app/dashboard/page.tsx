@@ -163,8 +163,8 @@ export default function DashboardOverviewPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <motion.div whileHover={{ scale: 1.02 }} transition={{ duration: 0.2 }}>
-          <Card className="h-full">
+        <motion.div whileHover={{ scale: 1.015, y: -2 }} transition={{ duration: 0.2 }}>
+          <Card className="h-full border border-zinc-200/60 hover:border-zinc-400 hover:shadow-lg transition-all duration-300">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <CardDescription>Total Pagu Definitif</CardDescription>
@@ -185,8 +185,8 @@ export default function DashboardOverviewPage() {
           </Card>
         </motion.div>
 
-        <motion.div whileHover={{ scale: 1.02 }} transition={{ duration: 0.2 }}>
-          <Card className="h-full">
+        <motion.div whileHover={{ scale: 1.015, y: -2 }} transition={{ duration: 0.2 }}>
+          <Card className="h-full border border-zinc-200/60 hover:border-zinc-400 hover:shadow-lg transition-all duration-300">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <CardDescription>Pagu Terpakai di RKAS</CardDescription>
@@ -200,8 +200,8 @@ export default function DashboardOverviewPage() {
           </Card>
         </motion.div>
 
-        <motion.div whileHover={{ scale: 1.02 }} transition={{ duration: 0.2 }}>
-          <Card className="h-full">
+        <motion.div whileHover={{ scale: 1.015, y: -2 }} transition={{ duration: 0.2 }}>
+          <Card className="h-full border border-zinc-200/60 hover:border-emerald-400 hover:shadow-emerald-50/50 hover:shadow-lg transition-all duration-300">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <CardDescription>Realisasi Belanja Riil</CardDescription>
@@ -215,8 +215,8 @@ export default function DashboardOverviewPage() {
           </Card>
         </motion.div>
 
-        <motion.div whileHover={{ scale: 1.02 }} transition={{ duration: 0.2 }}>
-          <Card className="h-full">
+        <motion.div whileHover={{ scale: 1.015, y: -2 }} transition={{ duration: 0.2 }}>
+          <Card className="h-full border border-zinc-200/60 hover:border-zinc-400 hover:shadow-lg transition-all duration-300">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <CardDescription>Jumlah Siswa Riil</CardDescription>
