@@ -70,7 +70,7 @@ export function Sidebar() {
       ];
 
   return (
-    <aside className="w-64 border-r border-zinc-200 bg-zinc-50/50 p-4 min-h-[calc(100vh-4rem)]">
+    <aside className="w-64 border-r border-zinc-200 bg-zinc-50/50 p-4 min-h-[calc(100vh-4rem)] hidden md:block">
       <div className="space-y-1">
         {menuItems.map((item) => {
           const Icon = item.icon;
