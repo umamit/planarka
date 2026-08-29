@@ -157,55 +157,57 @@ export default function RealizationPage() {
       </div>
 
       <Card className="p-0 overflow-hidden">
-        <table className="w-full text-left text-xs border-collapse">
-          <thead>
-            <tr className="bg-zinc-50/80 border-b border-zinc-200 text-zinc-700">
-              <th className="p-3 font-semibold w-24">Kode Akun</th>
-              <th className="p-3 font-semibold">Nama Kegiatan / Belanja</th>
-              <th className="p-3 font-semibold text-right">Pagu RKAS</th>
-              <th className="p-3 font-semibold text-right">Realisasi</th>
-              <th className="p-3 font-semibold text-right">Sisa Saldo</th>
-              <th className="p-3 font-semibold text-center w-36">Serapan</th>
-              <th className="p-3 font-semibold text-right">Aksi</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-zinc-200/80">
-            {items.map((item) => {
-              const remaining = item.finalBudget - item.realizedTotal;
-              const pct = item.finalBudget > 0 ? (item.realizedTotal / item.finalBudget) * 100 : 0;
-              return (
-                <tr key={item.id} className="hover:bg-zinc-50/50">
-                  <td className="p-3 font-mono text-[11px] text-zinc-500">{item.accountCode}</td>
-                  <td className="p-3 font-semibold text-zinc-900">{item.activityName}</td>
-                  <td className="p-3 text-right font-medium">{formatRupiah(item.finalBudget)}</td>
-                  <td className="p-3 text-right text-emerald-700 font-bold">{formatRupiah(item.realizedTotal)}</td>
-                  <td className={`p-3 text-right font-bold ${remaining === 0 ? "text-zinc-400" : "text-zinc-800"}`}>
-                    {formatRupiah(remaining)}
-                  </td>
-                  <td className="p-3">
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 h-1.5 bg-zinc-100 rounded-full overflow-hidden">
-                        <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${pct}%` }} />
+        <div className="overflow-x-auto w-full">
+          <table className="w-full text-left text-xs border-collapse min-w-[800px]">
+            <thead>
+              <tr className="bg-zinc-50/80 border-b border-zinc-200 text-zinc-700">
+                <th className="p-3 font-semibold w-24">Kode Akun</th>
+                <th className="p-3 font-semibold">Nama Kegiatan / Belanja</th>
+                <th className="p-3 font-semibold text-right">Pagu RKAS</th>
+                <th className="p-3 font-semibold text-right">Realisasi</th>
+                <th className="p-3 font-semibold text-right">Sisa Saldo</th>
+                <th className="p-3 font-semibold text-center w-36">Serapan</th>
+                <th className="p-3 font-semibold text-right">Aksi</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-zinc-200/80">
+              {items.map((item) => {
+                const remaining = item.finalBudget - item.realizedTotal;
+                const pct = item.finalBudget > 0 ? (item.realizedTotal / item.finalBudget) * 100 : 0;
+                return (
+                  <tr key={item.id} className="hover:bg-zinc-50/50">
+                    <td className="p-3 font-mono text-[11px] text-zinc-500">{item.accountCode}</td>
+                    <td className="p-3 font-semibold text-zinc-900">{item.activityName}</td>
+                    <td className="p-3 text-right font-medium">{formatRupiah(item.finalBudget)}</td>
+                    <td className="p-3 text-right text-emerald-700 font-bold">{formatRupiah(item.realizedTotal)}</td>
+                    <td className={`p-3 text-right font-bold ${remaining === 0 ? "text-zinc-400" : "text-zinc-800"}`}>
+                      {formatRupiah(remaining)}
+                    </td>
+                    <td className="p-3">
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 h-1.5 bg-zinc-100 rounded-full overflow-hidden">
+                          <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${pct}%` }} />
+                        </div>
+                        <span className="text-[10px] font-bold text-zinc-500 w-8 text-right">{pct.toFixed(0)}%</span>
                       </div>
-                      <span className="text-[10px] font-bold text-zinc-500 w-8 text-right">{pct.toFixed(0)}%</span>
-                    </div>
-                  </td>
-                  <td className="p-3 text-right">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setSelectedItem(item)}
-                      disabled={remaining <= 0}
-                      className="h-7 text-[10px]"
-                    >
-                      <Plus className="h-3 w-3 mr-0.5" /> Realisasi
-                    </Button>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                    </td>
+                    <td className="p-3 text-right">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setSelectedItem(item)}
+                        disabled={remaining <= 0}
+                        className="h-7 text-[10px]"
+                      >
+                        <Plus className="h-3 w-3 mr-0.5" /> Realisasi
+                      </Button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </Card>
 
       {/* Modal Dialog Input Realisasi */}

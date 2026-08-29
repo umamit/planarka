@@ -14,8 +14,9 @@ interface ShiftMatrixTableProps {
 export function ShiftMatrixTable({ items, onDeltaChange, onDelete }: ShiftMatrixTableProps) {
   return (
     <Card className="p-0 overflow-hidden">
-      <table className="w-full text-left text-xs border-collapse">
-        <thead>
+      <div className="overflow-x-auto w-full">
+        <table className="w-full text-left text-xs border-collapse min-w-[800px]">
+          <thead>
           <tr className="bg-zinc-50/80 border-b border-zinc-200 text-zinc-700">
             <th className="p-3 font-semibold">SNP & Kode Akun</th>
             <th className="p-3 font-semibold">Nama Kegiatan / Pos Belanja</th>
@@ -79,7 +80,8 @@ export function ShiftMatrixTable({ items, onDeltaChange, onDelete }: ShiftMatrix
             );
           })}
         </tbody>
-      </table>
+        </table>
+      </div>
     </Card>
   );
 }
