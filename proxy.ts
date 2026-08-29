@@ -5,7 +5,7 @@ const PROTECTED_PREFIX = "/dashboard";
 const LOGIN_PATH = "/auth/login";
 const SESSION_COOKIE = "planarka_session";
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Arahkan beranda "/" langsung ke "/dashboard"
