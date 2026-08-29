@@ -4,6 +4,13 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "PLANARKA — Smart BOS & Pre-ARKAS Planner",
   description: "Aplikasi perencanaan BOS, simulasi pengadaan buku Kurikulum Merdeka HET, dan validator pergeseran anggaran pra-ARKAS. By IBRA Digital Engineering.",
+  manifest: "/manifest.json",
+  themeColor: "#18181b",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "PLANARKA",
+  },
   icons: {
     icon: "/logo.png",
     apple: "/logo.png",
