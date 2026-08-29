@@ -5,13 +5,10 @@ import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/Ca
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { SAMPLE_BOOKS } from "@/lib/constants/sample-books";
-import { HET_ZONES } from "@/lib/constants/het-zones";
-import { calculateBookProcurement } from "@/lib/calculations/book-procurement";
-import { useSchool } from "@/lib/context/SchoolContext";
 import { formatRupiah } from "@/lib/utils";
 import { createClient } from "@supabase/supabase-js";
-import { Loader2, AlertTriangle } from "lucide-react";
-import { DapodikUploader } from "@/components/shared/DapodikUploader";
+import { Loader2, Sparkles, Check, RefreshCw } from "lucide-react";
+import { useSchool } from "@/lib/context/SchoolContext";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
@@ -19,78 +16,37 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export default function BookProcurementPage() {
   const { profile } = useSchool();
-  const [hetZone, setHetZone] = useState<number>(5); // Default Zona 5 Pulau Taliabu
-  const [phaseFilter, setPhaseFilter] = useState<string>("ALL");
   const [loading, setLoading] = useState(true);
   const [autoSaving, setAutoSaving] = useState(false);
+  const [totalPagu, setTotalPagu] = useState<number>(293260000); // Default Pagu acuan (sehingga 10% = 29.326.000)
 
-  // State siswa & rombel per kelas
-  const [students, setStudents] = useState<{ [grade: number]: number }>({
-    1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0
-  });
-  const [rombels, setRombels] = useState<{ [grade: number]: number }>({
-    1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0
-  });
+  // Map untuk menyimpan kuantitas (exemplar) pesanan buku: id_buku -> jumlah_eks
+  const [quantities, setQuantities] = useState<{ [bookId: string]: number }>({});
 
-  const [estimatedPagu, setEstimatedPagu] = useState<number>(0);
-
-  useEffect(() => {
-    fetchDapodikData();
-  }, [profile.npsn, profile.fiscalYear]);
-
-  const fetchDapodikData = async () => {
-    if (!profile.npsn) return;
-    setLoading(true);
-
-    try {
-      const { data: school } = await supabase
-        .from("tenants_schools")
-        .select("id, het_zone")
-        .eq("npsn", profile.npsn)
-        .single();
-
-      if (school) {
-        setHetZone(Number(school.het_zone) || 5);
-
-        const { data: alloc } = await supabase
-          .from("bos_allocations")
-          .select("*")
-          .eq("tenant_id", school.id)
-          .eq("fiscal_year", profile.fiscalYear)
-          .single();
-
-        if (alloc) {
-          // Ambil pagu real
-          const totalPaguVal = Number(alloc.bos_regular_total) + Number(alloc.bos_performance_total) + Number(alloc.silpa_previous_year);
-          setEstimatedPagu(totalPaguVal);
-
-          // Map siswa & rombel
-          const newStudents: { [grade: number]: number } = {};
-          const newRombels: { [grade: number]: number } = {};
-
-          for (let g = 1; g <= 9; g++) {
-            newStudents[g] = Number(alloc[`students_grade_${g}` as keyof typeof alloc]) || 0;
-            newRombels[g] = Number(alloc[`rombels_grade_${g}` as keyof typeof alloc]) || 0;
-          }
-
-          setStudents(newStudents);
-          setRombels(newRombels);
-        }
-      }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
+  // Preset data pesanan riil dari Surat Pesanan SDN Bobong
+  const presetBobong: { [bookId: string]: number } = {
+    "b-code5": 7,
+    "b-code6": 7,
+    "b-sd1-pjok": 6,
+    "b-sd1-art": 6,
+    "b-sd3-english": 8,
+    "b-sd3-ipas": 7,
+    "b-sd3-pjok": 7,
+    "b-sd4-pancasila": 7,
+    "b-sd4-indo": 7,
+    "b-sd4-ipas": 7,
+    "b-sd4-mat": 7,
+    "b-osn-ipa": 7,
+    "b-tka-sd": 3
   };
 
-  const handleUpdateDapodik = async (
-    updatedStudents: { [grade: number]: number },
-    updatedRombels: { [grade: number]: number }
-  ) => {
-    if (!profile.npsn) return;
-    setAutoSaving(true);
+  useEffect(() => {
+    fetchSavedData();
+  }, [profile.npsn, profile.fiscalYear]);
 
+  const fetchSavedData = async () => {
+    if (!profile.npsn) return;
+    setLoading(true);
     try {
       const { data: school } = await supabase
         .from("tenants_schools")
@@ -99,78 +55,137 @@ export default function BookProcurementPage() {
         .single();
 
       if (school) {
-        await supabase
+        // Ambil pagu anggaran BOSP
+        const { data: alloc } = await supabase
           .from("bos_allocations")
-          .upsert([
-            {
-              tenant_id: school.id,
-              fiscal_year: profile.fiscalYear,
-              students_grade_1: updatedStudents[1],
-              students_grade_2: updatedStudents[2],
-              students_grade_3: updatedStudents[3],
-              students_grade_4: updatedStudents[4],
-              students_grade_5: updatedStudents[5],
-              students_grade_6: updatedStudents[6],
-              students_grade_7: updatedStudents[7],
-              students_grade_8: updatedStudents[8],
-              students_grade_9: updatedStudents[9],
-              rombels_grade_1: updatedRombels[1],
-              rombels_grade_2: updatedRombels[2],
-              rombels_grade_3: updatedRombels[3],
-              rombels_grade_4: updatedRombels[4],
-              rombels_grade_5: updatedRombels[5],
-              rombels_grade_6: updatedRombels[6],
-              rombels_grade_7: updatedRombels[7],
-              rombels_grade_8: updatedRombels[8],
-              rombels_grade_9: updatedRombels[9],
-            },
-          ], { onConflict: "tenant_id, fiscal_year" });
+          .select("*")
+          .eq("tenant_id", school.id)
+          .eq("fiscal_year", profile.fiscalYear)
+          .single();
+
+        if (alloc) {
+          const totalPaguVal = Number(alloc.bos_regular_total) + Number(alloc.bos_performance_total) + Number(alloc.silpa_previous_year);
+          if (totalPaguVal > 0) {
+            setTotalPagu(totalPaguVal);
+          }
+        }
+
+        // Ambil kuantitas pesanan buku yang tersimpan
+        const { data: savedBooks } = await supabase
+          .from("bos_book_procurements")
+          .select("book_id, quantity")
+          .eq("tenant_id", school.id)
+          .eq("fiscal_year", profile.fiscalYear);
+
+        if (savedBooks && savedBooks.length > 0) {
+          const loadedQuantities: { [bookId: string]: number } = {};
+          savedBooks.forEach((item) => {
+            loadedQuantities[item.book_id] = item.quantity;
+          });
+          setQuantities(loadedQuantities);
+        } else {
+          // Default load preset Bobong
+          setQuantities(presetBobong);
+        }
       }
     } catch (e) {
-      console.error("Gagal auto-save Dapodik:", e);
+      console.error(e);
+      setQuantities(presetBobong);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSaveQuantity = async (bookId: string, qty: number) => {
+    const nextQuantities = { ...quantities, [bookId]: qty };
+    setQuantities(nextQuantities);
+
+    if (!profile.npsn) return;
+    setAutoSaving(true);
+    try {
+      const { data: school } = await supabase
+        .from("tenants_schools")
+        .select("id")
+        .eq("npsn", profile.npsn)
+        .single();
+
+      if (school) {
+        await supabase.from("bos_book_procurements").upsert(
+          {
+            tenant_id: school.id,
+            fiscal_year: profile.fiscalYear,
+            book_id: bookId,
+            quantity: qty,
+          },
+          { onConflict: "tenant_id, fiscal_year, book_id" }
+        );
+      }
+    } catch (e) {
+      console.error("Gagal menyimpan kuantitas buku:", e);
     } finally {
       setAutoSaving(false);
     }
   };
 
-  const handleStudentChange = (grade: number, value: number) => {
-    const nextStudents = { ...students, [grade]: value };
-    setStudents(nextStudents);
-    handleUpdateDapodik(nextStudents, rombels);
+  const applyPresetBobong = async () => {
+    setQuantities(presetBobong);
+    if (!profile.npsn) return;
+    setAutoSaving(true);
+    try {
+      const { data: school } = await supabase
+        .from("tenants_schools")
+        .select("id")
+        .eq("npsn", profile.npsn)
+        .single();
+
+      if (school) {
+        const insertData = Object.entries(presetBobong).map(([bookId, qty]) => ({
+          tenant_id: school.id,
+          fiscal_year: profile.fiscalYear,
+          book_id: bookId,
+          quantity: qty,
+        }));
+
+        await supabase.from("bos_book_procurements").upsert(insertData, {
+          onConflict: "tenant_id, fiscal_year, book_id",
+        });
+      }
+    } catch (e) {
+      console.error("Gagal menerapkan preset:", e);
+    } finally {
+      setAutoSaving(false);
+    }
   };
 
-  const handleRombelChange = (grade: number, value: number) => {
-    const nextRombels = { ...rombels, [grade]: value };
-    setRombels(nextRombels);
-    handleUpdateDapodik(students, nextRombels);
-  };
+  // Kalkulasi Total Belanja & Eks
+  let totalBelanjaBuku = 0;
+  let totalExemplars = 0;
 
-  const handleDapodikParsed = ({ students: newStudents, rombels: newRombels }: any) => {
-    setStudents(newStudents);
-    setRombels(newRombels);
-    handleUpdateDapodik(newStudents, newRombels);
-  };
+  const tableRows = SAMPLE_BOOKS.map((book) => {
+    const qty = quantities[book.id] || 0;
+    const price = book.hetZones[5] || 0; // Lock Zona 5 Taliabu
+    const subtotal = qty * price;
 
-  const filteredBooks = phaseFilter === "ALL" 
-    ? SAMPLE_BOOKS 
-    : SAMPLE_BOOKS.filter((b) => b.phase === phaseFilter);
+    totalBelanjaBuku += subtotal;
+    totalExemplars += qty;
 
-  const { items, totalProcurementCost, totalExemplars } = calculateBookProcurement(
-    filteredBooks,
-    students,
-    rombels,
-    hetZone,
-    2500 // Ongkir flat SIPLah per buku
-  );
+    return {
+      book,
+      qty,
+      price,
+      subtotal,
+    };
+  });
 
-  const bookPaguPercentage = estimatedPagu > 0 ? (totalProcurementCost / estimatedPagu) * 100 : 0;
-  const isExceedingRecommendation = bookPaguPercentage > 20;
+  const target10Persen = totalPagu * 0.1;
+  const selisihAnggaran = totalBelanjaBuku - target10Persen;
+  const rasioBelanja = totalPagu > 0 ? (totalBelanjaBuku / totalPagu) * 100 : 0;
 
   if (loading && profile.npsn) {
     return (
       <div className="flex flex-col items-center justify-center py-20 space-y-2">
         <div className="h-6 w-6 animate-spin rounded-full border-2 border-zinc-900 border-t-transparent" />
-        <span className="text-xs text-zinc-500 font-medium">Memuat kalkulator buku HET...</span>
+        <span className="text-xs text-zinc-500 font-medium">Memuat kalkulator lembar kerja buku...</span>
       </div>
     );
   }
@@ -179,141 +194,114 @@ export default function BookProcurementPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-zinc-900">Kalkulator Pengadaan Buku HET (Kurikulum Merdeka)</h1>
-          <p className="text-xs text-zinc-500 mt-1">Simulasi Kebutuhan Buku Siswa & Guru Sesuai Zonasi HET dan Estimasi Ongkos Kirim SIPLah</p>
+          <h1 className="text-2xl font-bold tracking-tight text-zinc-900">Lembar Kerja Pengadaan Buku (CP 46/2025)</h1>
+          <p className="text-xs text-zinc-500 mt-1">Estimasi pengadaan otomatis bersasarkan target minimal 10% pagu anggaran sekolah</p>
         </div>
         <div className="flex items-center gap-2">
           {autoSaving && (
             <span className="text-[11px] text-zinc-400 font-medium flex items-center gap-1">
               <Loader2 className="h-3 w-3 animate-spin text-zinc-500" />
-              Menyimpan perubahan otomatis...
+              Menyimpan ke database...
             </span>
           )}
+          <Button variant="ghost" size="sm" onClick={applyPresetBobong} className="gap-1.5 text-zinc-700">
+            <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+            Muat Preset SDN Bobong
+          </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardDescription>Total Anggaran Buku HET</CardDescription>
-          <CardTitle className="text-xl font-bold mt-1">{formatRupiah(totalProcurementCost)}</CardTitle>
-          <p className="text-[11px] text-zinc-500 mt-1">Untuk {totalExemplars} Eksemplar (HET + Ongkir)</p>
-        </Card>
-
-        <Card>
-          <div className="flex items-center justify-between">
-            <CardDescription>Rasio Anggaran BOSP</CardDescription>
-            <Badge variant={isExceedingRecommendation ? "warning" : "success"}>
-              {isExceedingRecommendation ? "Saran >20%" : "Ideal (<20%)"}
-            </Badge>
+      {/* Grid Dashboard Info Anggaran Buku */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card className="p-4">
+          <CardDescription>Total Pagu BOSP</CardDescription>
+          <div className="mt-1.5">
+            <input
+              type="number"
+              value={totalPagu}
+              onChange={(e) => setTotalPagu(Number(e.target.value))}
+              className="w-full h-9 px-3 rounded-lg border border-zinc-200 text-sm font-semibold font-mono focus:outline-none focus:ring-1 focus:ring-zinc-900"
+            />
           </div>
-          <CardTitle className="text-xl font-bold mt-1">{bookPaguPercentage.toFixed(1)}%</CardTitle>
-          <p className="text-[11px] text-zinc-500 mt-1">Total Pagu: {formatRupiah(estimatedPagu)}</p>
+          <p className="text-[10px] text-zinc-400 mt-1">Masukkan total pagu untuk menghitung rasio</p>
         </Card>
 
-        <Card>
-          <CardDescription>Zona HET Aktif</CardDescription>
-          <CardTitle className="text-xl font-bold mt-1">Zona {hetZone}</CardTitle>
-          <p className="text-[11px] text-zinc-500 mt-1">
-            Wilayah HET: {HET_ZONES.find(z => z.zone === hetZone)?.description || "Maluku Utara"}
+        <Card className="p-4">
+          <CardDescription>Target Minimal 10% Buku</CardDescription>
+          <CardTitle className="text-lg font-bold mt-1 text-zinc-900">{formatRupiah(target10Persen)}</CardTitle>
+          <p className="text-[10px] text-zinc-500 mt-1">Batas wajib Juknis BOSP 2026</p>
+        </Card>
+
+        <Card className="p-4">
+          <CardDescription>Total Belanja Buku Saat Ini</CardDescription>
+          <CardTitle className="text-lg font-bold mt-1 text-zinc-900">{formatRupiah(totalBelanjaBuku)}</CardTitle>
+          <p className="text-[10px] text-zinc-500 mt-1">Rasio: {rasioBelanja.toFixed(1)}% ({totalExemplars} eks)</p>
+        </Card>
+
+        <Card className="p-4">
+          <CardDescription>Status / Selisih Batas 10%</CardDescription>
+          <div className="mt-1 flex items-center gap-1.5">
+            {totalBelanjaBuku >= target10Persen ? (
+              <Badge variant="success" className="text-xs">Terpenuhi (10%+)</Badge>
+            ) : (
+              <Badge variant="warning" className="text-xs">Di bawah 10%</Badge>
+            )}
+          </div>
+          <p className={`text-[10px] mt-1 font-medium ${selisihAnggaran >= 0 ? "text-emerald-600" : "text-amber-600"}`}>
+            {selisihAnggaran >= 0 ? `Kelebihan: +${formatRupiah(selisihAnggaran)}` : `Kurang: ${formatRupiah(selisihAnggaran)}`}
           </p>
         </Card>
       </div>
 
-      {isExceedingRecommendation && (
-        <Card className="border-amber-200 bg-amber-50/50 p-4 space-y-1">
-          <div className="flex items-center gap-2 text-amber-800 font-semibold text-xs">
-            <AlertTriangle className="h-4.5 w-4.5" />
-            <span>Peringatan Juknis: Belanja Buku Melampaui 20% Pagu</span>
-          </div>
-          <p className="text-xs text-amber-700 leading-relaxed">
-            Belanja buku Anda saat ini mencapai {bookPaguPercentage.toFixed(1)}% dari total pagu BOS. Meskipun pengadaan buku HET diperbolehkan sesuai kebutuhan riil, pastikan prioritas operasional sekolah dasar lainnya tetap tercukupi.
-          </p>
-        </Card>
-      )}
-
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <div className="lg:col-span-1 space-y-4">
-          <DapodikUploader onDataParsed={handleDapodikParsed} />
-
-          <Card className="p-4 space-y-3">
-            <h3 className="font-bold text-xs text-zinc-800">Ubah Jumlah Siswa & Rombel (Dapodik)</h3>
-            <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-zinc-300 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-zinc-150">
-              {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((grade) => (
-                <div key={grade} className="grid grid-cols-3 gap-2 items-center text-xs">
-                  <span className="font-semibold text-zinc-700">Kls {grade}</span>
-                  <div>
-                    <label className="text-[9px] text-zinc-400 block">Siswa</label>
+      {/* Spreadsheet / Lembar Kerja Buku */}
+      <Card className="p-0 overflow-hidden border border-zinc-200">
+        <div className="overflow-x-auto w-full">
+          <table className="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr className="bg-zinc-50 border-b border-zinc-200 text-zinc-700 font-semibold">
+                <th className="p-3 w-12 text-center">No</th>
+                <th className="p-3">Judul Buku (Penerbit Andi - CP 46/2025)</th>
+                <th className="p-3 w-28 text-center">Sasaran Kelas</th>
+                <th className="p-3 w-32 text-right">Harga Satuan (Zona 5)</th>
+                <th className="p-3 w-28 text-center">Jumlah Pesanan (Eks)</th>
+                <th className="p-3 w-36 text-right">Nominal Subtotal</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-zinc-200/60 font-medium">
+              {tableRows.map((row, index) => (
+                <tr key={row.book.id} className="hover:bg-zinc-50/50">
+                  <td className="p-3 text-center text-zinc-400 font-mono">{index + 1}</td>
+                  <td className="p-3">
+                    <div className="font-semibold text-zinc-800">{row.book.subjectTitle}</div>
+                    <div className="text-[10px] text-zinc-400 mt-0.5">Andi Offset • CP 46/2025</div>
+                  </td>
+                  <td className="p-3 text-center text-zinc-600">Kelas {row.book.classGrade}</td>
+                  <td className="p-3 text-right font-mono text-zinc-700">{formatRupiah(row.price)}</td>
+                  <td className="p-3 text-center">
                     <input
                       type="number"
-                      value={students[grade]}
-                      onChange={(e) => handleStudentChange(grade, Number(e.target.value))}
-                      className="w-full h-8 rounded-lg border border-zinc-200 text-center font-mono text-xs focus:outline-none"
+                      min="0"
+                      value={row.qty || ""}
+                      onChange={(e) => handleSaveQuantity(row.book.id, Number(e.target.value))}
+                      className="w-16 h-8 text-center rounded-md border border-zinc-200 font-mono text-xs focus:outline-none focus:ring-1 focus:ring-zinc-900"
+                      placeholder="0"
                     />
-                  </div>
-                  <div>
-                    <label className="text-[9px] text-zinc-400 block">Rombel</label>
-                    <input
-                      type="number"
-                      value={rombels[grade]}
-                      onChange={(e) => handleRombelChange(grade, Number(e.target.value))}
-                      className="w-full h-8 rounded-lg border border-zinc-200 text-center font-mono text-xs focus:outline-none"
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Card>
-        </div>
-
-        <div className="lg:col-span-3 space-y-4">
-          <div className="flex gap-2">
-            {["ALL", "A", "B", "C", "D"].map((phase) => (
-              <Button
-                key={phase}
-                variant={phaseFilter === phase ? "primary" : "ghost"}
-                size="sm"
-                onClick={() => setPhaseFilter(phase)}
-              >
-                {phase === "ALL" ? "Semua Fase" : `Fase ${phase}`}
-              </Button>
-            ))}
-          </div>
-
-          <Card className="p-0 overflow-hidden">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="bg-zinc-50/80 border-b border-zinc-200 text-zinc-700">
-                  <th className="p-3 font-semibold">Uraian Buku (Kurikulum Merdeka)</th>
-                  <th className="p-3 font-semibold">Sasaran Kelas</th>
-                  <th className="p-3 font-semibold">Harga HET</th>
-                  <th className="p-3 font-semibold">Estimasi Ongkir</th>
-                  <th className="p-3 font-semibold">Pemesanan</th>
-                  <th className="p-3 font-semibold text-right">Subtotal</th>
+                  </td>
+                  <td className="p-3 text-right font-bold text-zinc-900 font-mono">
+                    {formatRupiah(row.subtotal)}
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-200/80">
-                {items.map((item, idx) => (
-                  <tr key={item.book.id || idx} className="hover:bg-zinc-50/50">
-                    <td className="p-3">
-                      <div className="font-semibold text-zinc-900">{item.book.subjectTitle}</div>
-                      <div className="text-[10px] text-zinc-400 font-medium">Fase {item.book.phase} • {item.book.bookType}</div>
-                    </td>
-                    <td className="p-3 text-zinc-600 font-medium">Kelas {item.book.classGrade}</td>
-                    <td className="p-3">{formatRupiah(item.hetUnitCost)}</td>
-                    <td className="p-3">{formatRupiah(item.shippingUnitCost)}</td>
-                    <td className="p-3 font-medium text-zinc-900">
-                      {item.exemplarsNeeded} eks ({item.studentCount} siswa + {item.book.bookType === "Siswa" ? "0" : "1"} guru)
-                    </td>
-                    <td className="p-3 font-bold text-zinc-950 text-right">
-                      {formatRupiah(item.totalCost)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </Card>
+              ))}
+              <tr className="bg-zinc-50/80 font-bold border-t-2 border-zinc-300">
+                <td colSpan={4} className="p-3 text-right text-zinc-700 text-xs">TOTAL BELANJA BUKU:</td>
+                <td className="p-3 text-center font-mono text-zinc-900 text-xs">{totalExemplars} eks</td>
+                <td className="p-3 text-right font-mono text-zinc-950 text-sm">{formatRupiah(totalBelanjaBuku)}</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-      </div>
+      </Card>
     </div>
   );
 }
+
