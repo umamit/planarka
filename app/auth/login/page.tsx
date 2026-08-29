@@ -6,6 +6,7 @@ import Image from "next/image";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { ArrowRight, KeyRound, AlertCircle } from "lucide-react";
+import { motion } from "framer-motion";
 
 function LoginForm() {
   const router = useRouter();
