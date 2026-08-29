@@ -40,6 +40,27 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 * **Verifikasi Empiris Tanpa Asumsi**: Dilarang keras berasumsi atas cara kerja sistem eksternal atau aplikasi pihak ketiga (seperti Dapodik dan ARKAS). Agen wajib selalu memverifikasi dokumentasi resmi atau melakukan query/uji coba langsung untuk memastikan fakta operasional sebelum menjelaskan atau menerapkannya ke dalam aplikasi.
 * **Verifikasi Struktur Proyek**: Sebelum menyarankan, merencanakan, atau membuat fitur baru, Agen wajib memeriksa struktur folder, file, dan relasi tabel database terlebih dahulu menggunakan search/grep di repositori aktif untuk memastikan fitur tersebut belum pernah dibuat sebelumnya di halaman atau modul lain.
 
+* **Struktur Direktori Proyek**:
+  ```
+  .
+  ├── app/                        # Next.js App Router (Halaman & Routing)
+  │   ├── api/                    # Endpoint API backend (Auth, references, AI)
+  │   ├── auth/login/             # Halaman portal login berlisensi
+  │   ├── admin/licenses/         # Konsol manajemen lisensi superadmin
+  │   └── dashboard/              # Workspace planner (RKAS, BKU, Realisasi, dll.)
+  ├── components/                 # React UI Components
+  │   ├── ui/                     # Komponen atomik dasar (Button, Card, Input)
+  │   ├── shared/                 # Komponen bersama (Navbar, Sidebar, Footer, AI)
+  │   └── budget/                 # Komponen visual khusus RKAS & kalkulator
+  ├── lib/                        # Utilitas & Logika Bisnis
+  │   ├── context/                # Global state (SchoolContext)
+  │   ├── constants/              # Katalog buku, kode rekening, PBD indicators
+  │   ├── supabase/               # Supabase database client
+  │   └── calculations/           # Logika validasi regulasi & perhitungan pagu
+  └── supabase/
+      └── migrations/             # Skrip migrasi schema database SQL
+  ```
+
 
 ---
 
