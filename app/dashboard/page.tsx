@@ -10,7 +10,19 @@ import { formatRupiah, formatNumber } from "@/lib/utils";
 import { createClient } from "@supabase/supabase-js";
 import { Building, Users, Wallet, ShieldAlert } from "lucide-react";
 import { motion } from "framer-motion";
-import { DashboardCharts } from "@/components/budget/DashboardCharts";
+import dynamic from "next/dynamic";
+
+const DashboardCharts = dynamic(
+  () => import("@/components/budget/DashboardCharts").then((mod) => mod.DashboardCharts),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-[280px] w-full bg-zinc-50 border border-zinc-200/50 rounded-xl animate-pulse flex items-center justify-center text-xs text-zinc-400 font-medium">
+        Memuat grafik visualisasi...
+      </div>
+    ),
+  }
+);
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
