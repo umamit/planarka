@@ -89,47 +89,58 @@ function LoginForm() {
 export default function LoginPage() {
   return (
     <div
-      className="min-h-screen flex flex-col justify-center items-center p-4 relative overflow-hidden"
+      className="min-h-screen flex flex-col justify-center items-center p-4 relative overflow-hidden bg-white"
       style={{
-        backgroundColor: "#fafafa",
-        backgroundImage: "radial-gradient(circle, #d4d4d8 1px, transparent 1px)",
-        backgroundSize: "28px 28px",
+        backgroundImage: `
+          linear-gradient(to right, #f4f4f5 1px, transparent 1px),
+          linear-gradient(to bottom, #f4f4f5 1px, transparent 1px)
+        `,
+        backgroundSize: "24px 24px",
       }}
     >
-      {/* Gradient accent blobs */}
-      <div
-        className="pointer-events-none absolute -top-32 -left-32 h-96 w-96 rounded-full opacity-30"
-        style={{ background: "radial-gradient(circle, #a5b4fc 0%, transparent 70%)", filter: "blur(48px)" }}
-      />
-      <div
-        className="pointer-events-none absolute -bottom-32 -right-32 h-96 w-96 rounded-full opacity-20"
-        style={{ background: "radial-gradient(circle, #6ee7b7 0%, transparent 70%)", filter: "blur(48px)" }}
-      />
-      <div
-        className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-64 w-64 rounded-full opacity-10"
-        style={{ background: "radial-gradient(circle, #818cf8 0%, transparent 70%)", filter: "blur(64px)" }}
+      {/* Radial Gradient overlay to fade the grid edges */}
+      <div 
+        className="pointer-events-none absolute inset-0 bg-white"
+        style={{
+          background: "radial-gradient(circle at center, transparent 0%, rgba(255,255,255,0.92) 80%)"
+        }}
       />
 
-      <div className="w-full max-w-md space-y-6 relative z-10">
+      {/* Subtle color highlight accent blobs */}
+      <div
+        className="pointer-events-none absolute top-1/4 left-1/4 h-80 w-80 rounded-full opacity-30"
+        style={{ background: "radial-gradient(circle, #c7d2fe 0%, transparent 70%)", filter: "blur(60px)" }}
+      />
+      <div
+        className="pointer-events-none absolute bottom-1/4 right-1/4 h-80 w-80 rounded-full opacity-35"
+        style={{ background: "radial-gradient(circle, #a7f3d0 0%, transparent 70%)", filter: "blur(60px)" }}
+      />
+
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.98, y: 10 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+        className="w-full max-w-md space-y-6 relative z-10"
+      >
         <div className="text-center space-y-2">
           <Image
             src="/logo.png"
             alt="PLANARKA"
             width={72}
             height={72}
-            className="mx-auto rounded-2xl object-contain"
+            className="mx-auto rounded-2xl object-contain shadow-md"
             priority
           />
-          <h1 className="text-2xl font-bold tracking-tight text-zinc-900">PLANARKA</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-zinc-900 font-sans">PLANARKA</h1>
           <p className="text-xs text-zinc-500">Smart BOS &amp; Pre-ARKAS Budget Simulator</p>
           <p className="text-[11px] text-zinc-400">by IBRA Digital Engineering</p>
         </div>
 
-        <Card className="shadow-xl p-6 space-y-4 backdrop-blur-sm bg-white/90 border-zinc-200/80">
+        <Card className="shadow-2xl p-6 space-y-4 backdrop-blur-md bg-white/80 border border-zinc-200/50 hover:border-zinc-300/80 transition-all duration-300">
           <CardHeader className="p-0 pb-2">
             <div className="flex items-center gap-2">
               <KeyRound className="h-5 w-5 text-zinc-700" />
-              <CardTitle className="text-base">Akses Berlisensi</CardTitle>
+              <CardTitle className="text-base font-bold">Akses Berlisensi</CardTitle>
             </div>
             <CardDescription>Masukkan NPSN dan Kunci Lisensi resmi yang diterbitkan oleh IBRA Digital Engineering</CardDescription>
           </CardHeader>
@@ -157,7 +168,7 @@ export default function LoginPage() {
         <p className="text-center text-[11px] text-zinc-400">
           Hak Cipta &copy; 2026 IBRA Digital Engineering. All Rights Reserved.
         </p>
-      </div>
+      </motion.div>
     </div>
   );
 }
