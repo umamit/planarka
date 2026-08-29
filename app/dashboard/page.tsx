@@ -164,7 +164,16 @@ export default function DashboardOverviewPage() {
             </div>
             <CardTitle className="text-xl font-bold">{formatRupiah(pagu.totalPagu)}</CardTitle>
           </CardHeader>
-          <div className="text-[11px] text-zinc-500">Termasuk SiLPA: {formatRupiah(pagu.silpaPreviousYear)}</div>
+          <div className="px-6 pb-4 space-y-1 text-[10px] text-zinc-500 border-t border-zinc-100 pt-2 mt-1">
+            <div className="flex justify-between">
+              <span>Tahap 1 (50% + SiLPA):</span>
+              <span className="font-semibold text-zinc-700">{formatRupiah(pagu.phase1Allocation)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Tahap 2 (50%):</span>
+              <span className="font-semibold text-zinc-700">{formatRupiah(pagu.phase2Allocation)}</span>
+            </div>
+          </div>
         </Card>
 
         <Card>
