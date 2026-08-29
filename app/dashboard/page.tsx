@@ -265,4 +265,5 @@ export default function DashboardOverviewPage() {
         </div>
       </Card>
     </motion.div>
+  );
 }
