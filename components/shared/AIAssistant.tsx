@@ -154,9 +154,9 @@ export function AIAssistant() {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
+    <div className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-50 flex flex-col items-end">
       {isOpen && (
-        <div className="mb-4 w-[360px] h-[450px] bg-white rounded-2xl border border-zinc-200 shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-5 duration-200">
+        <div className="mb-4 w-[calc(100vw-2rem)] md:w-[360px] h-[450px] bg-white rounded-2xl border border-zinc-200 shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-5 duration-200">
           <div className="h-14 bg-zinc-900 px-4 flex items-center justify-between">
             <div className="flex items-center gap-2 text-white">
               <Bot className="h-5 w-5" />
