@@ -39,6 +39,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 * **Batas Panjang File**: Setiap file komponen, modul logika, konstanta, atau stylesheet wajib **<= 150 baris** (150L) dengan batas aman direkomendasikan **<= 100 baris** (100L) demi menjaga Single Responsibility Principle.
 * **Verifikasi Empiris Tanpa Asumsi**: Dilarang keras berasumsi atas cara kerja sistem eksternal atau aplikasi pihak ketiga (seperti Dapodik dan ARKAS). Agen wajib selalu memverifikasi dokumentasi resmi atau melakukan query/uji coba langsung untuk memastikan fakta operasional sebelum menjelaskan atau menerapkannya ke dalam aplikasi.
 * **Verifikasi Struktur Proyek**: Sebelum menyarankan, merencanakan, atau membuat fitur baru, Agen wajib memeriksa struktur folder, file, dan relasi tabel database terlebih dahulu menggunakan search/grep di repositori aktif untuk memastikan fitur tersebut belum pernah dibuat sebelumnya di halaman atau modul lain.
+* **Layout Seluler & Mobile-First**: Semua pengembangan halaman web, komponen, dan form wajib didesain menggunakan pendekatan Mobile-First. Dilarang keras membiarkan elemen visual pecah, tumpang tindih (overlap), atau meluap keluar batas layar ponsel (overflow). Gunakan pembungkus responsif seperti `overflow-x-auto w-full` dengan `min-w` spesifik pada semua tabel data lebar di aplikasi.
 
 * **Struktur Direktori Proyek**:
   ```
