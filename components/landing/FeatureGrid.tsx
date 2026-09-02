@@ -1,75 +1,49 @@
 import React from "react";
-import { Card, CardTitle, CardDescription } from "@/components/ui/Card";
-import { 
-  ArrowLeftRight, 
-  BookOpen, 
-  UserCheck, 
-  Lock, 
-  Receipt, 
-  FileSpreadsheet 
-} from "lucide-react";
+import { ArrowRight, CheckCircle2 } from "lucide-react";
 
 export function FeatureGrid() {
-  const features = [
+  const steps = [
     {
-      icon: ArrowLeftRight,
-      title: "Simulator Pergeseran Pre-ARKAS",
-      description: "Pengujian mutasi belanja real-time sebelum diajukan ke dinas/ARKAS 4. Dilengkapi fitur Zero-Balance Validator untuk mencegah saldo minus."
+      num: "01",
+      title: "Pilih Jenis Sekolah & Pagu BOSP",
+      desc: "Masukkan jumlah siswa dari Dapodik dan tentukan status sekolah (Negeri atau Swasta). Sistem otomatis mengunci rasio batas honorarium Non-ASN (20% untuk Negeri, 40% untuk Swasta)."
     },
     {
-      icon: BookOpen,
-      title: "Lembar Kerja Buku (CP 46/2025)",
-      description: "Tabel pengadaan otomatis sesuai target 10% pagu wajib Juknis BOSP. Terintegrasi dengan katalog Penerbit Andi (Buku Siswa & Guru)."
+      num: "02",
+      title: "Simulasi Pergeseran & Lembar Kerja Buku",
+      desc: "Lakukan pengujian mutasi belanja dengan proteksi Zero-Balance agar saldo tidak minus. Gunakan lembar kerja buku CP 46/2025 untuk memastikan alokasi buku minimal 10% terpenuhi."
     },
     {
-      icon: UserCheck,
-      title: "Validasi Honor Guru Non-ASN",
-      description: "Pengunci otomatis batas honor Non-ASN maksimal 20% pagu (Sekolah Negeri) dan 40% pagu (Sekolah Swasta) sesuai Permendikdasmen No. 8/2026."
-    },
-    {
-      icon: Lock,
-      title: "Daya & Jasa Terkunci (12 Bulan)",
-      description: "Proteksi anggaran rutin seperti listrik PLN, internet sekolah, air, dan langganan software agar tidak tergeser secara tidak sengaja."
-    },
-    {
-      icon: Receipt,
-      title: "Kalkulator Pajak & Rekonsiliasi Kas BKU",
-      description: "Perhitungan PPN/PPh otomatis dan pengawasan batas kas tunai di brankas sekolah maksimal Rp 10.000.000 untuk kesiapan audit fisik."
-    },
-    {
-      icon: FileSpreadsheet,
-      title: "Ekspor Rapat Pleno & Excel ARKAS",
-      description: "Cetak PDF Berita Acara Rapat Pleno Komite dan file Excel (.xlsx) dengan struktur kode rekening yang siap disalin ke ARKAS 4."
+      num: "03",
+      title: "Salin ke ARKAS 4 & Cetak Berita Acara",
+      desc: "Ekspor lembar kerja ke Excel dengan susunan kode rekening ARKAS 4 yang pas untuk disalin ke aplikasi desktop pemerintah, serta cetak PDF Berita Acara Rapat Pleno."
     }
   ];
 
   return (
-    <section className="py-16 md:py-24 bg-zinc-50/50 border-b border-zinc-200/80">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-14">
+    <section className="py-16 md:py-20 bg-zinc-50 border-b border-zinc-200">
+      <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+        <div className="text-center max-w-2xl mx-auto mb-12">
+          <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider block mb-1">ALUR KERJA APLIKASI</span>
           <h2 className="text-2xl font-bold tracking-tight text-zinc-950 sm:text-3xl">
-            Solusi Perencanaan Lengkap & Otomatis
+            Tiga Langkah Sederhana Menyusun Pre-ARKAS
           </h2>
-          <p className="mt-2 text-xs sm:text-sm text-zinc-500 max-w-xl mx-auto">
-            Semua modul dirancang khusus untuk mempermudah tugas Kepala Sekolah, Tim Manajemen BOS, dan Bendahara dalam menyusun RKAS yang akurat.
-          </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {features.map((item, idx) => {
-            const Icon = item.icon;
-            return (
-              <Card key={idx} className="p-6 transition-all hover:shadow-md border-zinc-200/90 bg-white">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-900 text-white mb-4 shadow-sm">
-                  <Icon className="h-5 w-5" />
-                </div>
-                <CardTitle className="text-base font-bold text-zinc-900">{item.title}</CardTitle>
-                <CardDescription className="mt-2.5 text-xs leading-relaxed text-zinc-600">
-                  {item.description}
-                </CardDescription>
-              </Card>
-            );
-          })}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {steps.map((s, i) => (
+            <div key={i} className="p-6 rounded-xl border border-zinc-200 bg-white shadow-sm flex flex-col justify-between">
+              <div>
+                <span className="text-2xl font-black font-mono text-zinc-300 block mb-3">{s.num}</span>
+                <h3 className="text-base font-bold text-zinc-900 mb-2">{s.title}</h3>
+                <p className="text-xs leading-relaxed text-zinc-600 font-normal">{s.desc}</p>
+              </div>
+              <div className="mt-6 pt-4 border-t border-zinc-100 flex items-center gap-1 text-[11px] font-semibold text-emerald-700">
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                <span>Otomatis Terverifikasi</span>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </section>
