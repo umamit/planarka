@@ -7,7 +7,6 @@ import { FileText, FileSpreadsheet, Loader2 } from "lucide-react";
 import { useSchool } from "@/lib/context/SchoolContext";
 import { createClient } from "@supabase/supabase-js";
 import { formatRupiah } from "@/lib/utils";
-import * as XLSX from "xlsx";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
@@ -75,29 +74,62 @@ export default function ExportDocumentsPage() {
     }
   };
 
-  const handleExportExcel = () => {
+  const handleExportExcel = async () => {
     setIsExcelLoading(true);
+    try {
+      const XLSX = await import("xlsx");
 
-    const dataHeader = [
-      ["KODE REKENING", "NAMA KEGIATAN / URAIAN", "VOLUME", "SATUAN", "HARGA SATUAN", "TOTAL ANGGARAN AWAL", "PERGESERAN (+/-)", "ANGGARAN AKHIR"]
-    ];
+      const dataHeader = [
+        ["KODE REKENING", "NAMA KEGIATAN / URAIAN", "VOLUME", "SATUAN", "HARGA SATUAN (RP)", "TOTAL ANGGARAN AWAL (RP)", "PERGESERAN (+/- RP)", "ANGGARAN AKHIR (RP)"]
+      ];
 
-    const dataRows = items.map((it) => [
-      it.code,
-      it.name,
-      it.volume,
-      it.unit,
-      it.unitPrice,
-      it.initial,
-      it.delta,
-      it.final
-    ]);
+      const dataRows = items.map((it) => [
+        it.code,
+        it.name,
+        it.volume,
+        it.unit,
+        it.unitPrice,
+        it.initial,
+        it.delta,
+        it.final
+      ]);
 
-    const ws = XLSX.utils.aoa_to_sheet([...dataHeader, ...dataRows]);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Simulasi_Pergeseran_BOS");
-    XLSX.writeFile(wb, `Lembar_Kerja_Simulasi_BOS_${profile.schoolName || "Sekolah"}_${profile.fiscalYear}.xlsx`);
-    setIsExcelLoading(false);
+      const ws = XLSX.utils.aoa_to_sheet([...dataHeader, ...dataRows]);
+      
+      // Auto-fit kolom
+      ws["!cols"] = [
+        { wch: 18 },
+        { wch: 45 },
+        { wch: 10 },
+        { wch: 12 },
+        { wch: 18 },
+        { wch: 22 },
+        { wch: 20 },
+        { wch: 22 }
+      ];
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Pergeseran_ARKAS_4");
+
+      // Tulis file dalam format .xlsx berbasis Blob agar kompatibel 100% dengan browser & Mac/Windows
+      const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+      const blob = new Blob([excelBuffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+      
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      link.href = url;
+      link.download = `Lembar_Kerja_Pergeseran_ARKAS_${profile.schoolName || "Sekolah"}_${profile.fiscalYear}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+    } catch (error: any) {
+      console.error("Gagal ekspor Excel:", error);
+      alert("Terjadi kesalahan saat mengunduh berkas Excel: " + error.message);
+    } finally {
+      setIsExcelLoading(false);
+    }
   };
 
   const handleExportPdf = async () => {
